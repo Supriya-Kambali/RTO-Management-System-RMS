@@ -1,9 +1,71 @@
 import { Response } from "express";
 import { AuthRequest } from "../middlewares/authMiddleware";
-import { createPayment, getPaymentsByUser } from "../models/paymentModel";
+import {
+  initiatePayment,
+  createPayment,
+  verifyPayment,
+  getPaymentById,
+  getAllPayments,
+  getPaymentsByUser,
+  refundPayment,
+} from "../models/paymentModel";
 import { getChallanById, updateChallanStatus } from "../models/challanModel";
+import { createNotification } from "../models/notificationModel";
 
-// Pay a challan (citizen only)
+// Initiate a payment (citizen)
+export const initiateNewPayment = async (req: AuthRequest, res: Response) => {
+  try {
+    const { amount, payment_type, reference_id, challan_id } = req.body;
+    const user_id = req.user?.id;
+
+    if (!user_id) {
+      return res.status(401).json({ success: false, message: "User not authenticated" });
+    }
+
+    if (!amount || !payment_type) {
+      return res.status(400).json({ success: false, message: "amount and payment_type are required" });
+    }
+
+    const payment = await initiatePayment(user_id, amount, payment_type, reference_id, challan_id);
+    res.status(201).json({ success: true, message: "Payment initiated", data: { payment } });
+  } catch (error) {
+    console.error("Error initiating payment:", error);
+    res.status(500).json({ success: false, message: "Failed to initiate payment" });
+  }
+};
+
+// Verify/complete a payment
+export const verifyAPayment = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { transaction_id, payment_method } = req.body;
+
+    if (!transaction_id || !payment_method) {
+      return res.status(400).json({ success: false, message: "transaction_id and payment_method are required" });
+    }
+
+    const payment = await verifyPayment(id, transaction_id, payment_method);
+
+    if (!payment) {
+      return res.status(404).json({ success: false, message: "Payment not found or already processed" });
+    }
+
+    // If payment was for a challan, update challan status
+    if (payment.challan_id) {
+      await updateChallanStatus(payment.challan_id, "PAID");
+    }
+
+    // Notify user
+    await createNotification(payment.user_id, `Payment of ₹${payment.amount} completed successfully`);
+
+    res.json({ success: true, message: "Payment verified", data: { payment } });
+  } catch (error) {
+    console.error("Error verifying payment:", error);
+    res.status(500).json({ success: false, message: "Failed to verify payment" });
+  }
+};
+
+// Pay a challan (citizen only) - legacy support
 export const payChallan = async (req: AuthRequest, res: Response) => {
   try {
     const { challanId } = req.params;
@@ -27,6 +89,8 @@ export const payChallan = async (req: AuthRequest, res: Response) => {
 
     await updateChallanStatus(challanId, "PAID");
 
+    await createNotification(user_id, `Challan payment of ₹${challan.amount} completed successfully`);
+
     res.status(201).json({ success: true, message: "Payment successful", data: { payment } });
   } catch (error) {
     console.error("Error processing payment:", error);
@@ -34,7 +98,35 @@ export const payChallan = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// Get payments for authenticated user
+// Get all payments (admin)
+export const listPayments = async (req: AuthRequest, res: Response) => {
+  try {
+    const payments = await getAllPayments();
+    res.json({ success: true, data: { payments } });
+  } catch (error) {
+    console.error("Error fetching payments:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch payments" });
+  }
+};
+
+// Get payment by ID
+export const getPayment = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const payment = await getPaymentById(id);
+
+    if (!payment) {
+      return res.status(404).json({ success: false, message: "Payment not found" });
+    }
+
+    res.json({ success: true, data: { payment } });
+  } catch (error) {
+    console.error("Error fetching payment:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch payment" });
+  }
+};
+
+// Get payments for authenticated user (payment history)
 export const getMyPayments = async (req: AuthRequest, res: Response) => {
   try {
     const user_id = req.user?.id;
@@ -48,5 +140,31 @@ export const getMyPayments = async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error("Error fetching payments:", error);
     res.status(500).json({ success: false, message: "Failed to fetch payments" });
+  }
+};
+
+// Refund a payment (admin)
+export const refundAPayment = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
+
+    if (!reason) {
+      return res.status(400).json({ success: false, message: "Refund reason is required" });
+    }
+
+    const payment = await refundPayment(id, reason);
+
+    if (!payment) {
+      return res.status(404).json({ success: false, message: "Payment not found or cannot be refunded" });
+    }
+
+    // Notify user
+    await createNotification(payment.user_id, `Payment of ₹${payment.amount} has been refunded: ${reason}`);
+
+    res.json({ success: true, message: "Payment refunded", data: { payment } });
+  } catch (error) {
+    console.error("Error refunding payment:", error);
+    res.status(500).json({ success: false, message: "Failed to refund payment" });
   }
 };

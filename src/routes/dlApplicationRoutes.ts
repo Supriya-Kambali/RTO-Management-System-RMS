@@ -1,14 +1,27 @@
 import { Router } from "express";
 import { authMiddleware } from "../middlewares/authMiddleware";
 import { roleMiddleware, ROLES } from "../middlewares/roleMiddleware";
-import { applyForDl, viewAllDlApplications } from "../controllers/dlApplicationController";
+import {
+  applyForDl,
+  viewAllDlApplications,
+  getDlApplication,
+  getMyDlApplications,
+  verifyDlDocuments,
+  scheduleTest,
+} from "../controllers/dlApplicationController";
 
 const router = Router();
 
-// POST - Citizen only
+// Citizen routes
 router.post("/dl/apply", authMiddleware, roleMiddleware([ROLES.CITIZEN]), applyForDl);
+router.get("/dl/applications/my", authMiddleware, roleMiddleware([ROLES.CITIZEN]), getMyDlApplications);
 
-// GET - Admin or Officer only
-router.get("/dl/applications", authMiddleware, roleMiddleware([ROLES.ADMIN, ROLES.OFFICER]), viewAllDlApplications);
+// Admin routes
+router.get("/dl/applications", authMiddleware, roleMiddleware([ROLES.SUPER_ADMIN, ROLES.RTO_ADMIN]), viewAllDlApplications);
+router.get("/dl/applications/:id", authMiddleware, roleMiddleware([ROLES.SUPER_ADMIN, ROLES.RTO_ADMIN, ROLES.RTO_OFFICER]), getDlApplication);
+router.post("/dl/applications/:id/schedule-test", authMiddleware, roleMiddleware([ROLES.RTO_ADMIN]), scheduleTest);
+
+// Officer routes
+router.put("/dl/applications/:id/verify", authMiddleware, roleMiddleware([ROLES.RTO_OFFICER]), verifyDlDocuments);
 
 export default router;

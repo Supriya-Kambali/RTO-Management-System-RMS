@@ -1,6 +1,7 @@
 import { Response } from "express";
 import { AuthRequest } from "../middlewares/authMiddleware";
 import {
+  createNotification,
   getNotificationsByUser,
   markNotificationAsRead,
 } from "../models/notificationModel";
@@ -42,5 +43,22 @@ export const markAsRead = async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error("Error marking notification as read:", error);
     res.status(500).json({ success: false, message: "Failed to mark notification as read" });
+  }
+};
+
+// Send a notification to a user (System/Admin only)
+export const sendNotification = async (req: AuthRequest, res: Response) => {
+  try {
+    const { user_id, message } = req.body;
+
+    if (!user_id || !message) {
+      return res.status(400).json({ success: false, message: "user_id and message are required" });
+    }
+
+    const notification = await createNotification(user_id, message);
+    res.status(201).json({ success: true, message: "Notification sent", data: { notification } });
+  } catch (error) {
+    console.error("Error sending notification:", error);
+    res.status(500).json({ success: false, message: "Failed to send notification" });
   }
 };

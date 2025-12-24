@@ -2,14 +2,17 @@ import express, { Request, Response, NextFunction } from "express";
 import dotenv from "dotenv";
 import healthRoutes from "./routes/healthRoutes";
 import roleTestRoutes from "./routes/roleTestRoutes";
+import authRoutes from "./routes/authRoutes";
 import userRoutes from "./routes/userRoutes";
 import rtoOfficeRoutes from "./routes/rtoOfficeRoutes";
+import vehicleRoutes from "./routes/vehicleRoutes";
 import dlApplicationRoutes from "./routes/dlApplicationRoutes";
 import drivingLicenseRoutes from "./routes/drivingLicenseRoutes";
 import challanRoutes from "./routes/challanRoutes";
 import paymentRoutes from "./routes/paymentRoutes";
 import appointmentRoutes from "./routes/appointmentRoutes";
 import notificationRoutes from "./routes/notificationRoutes";
+import analyticsRoutes from "./routes/analyticsRoutes";
 import { connectDB } from "./db";
 
 // Load environment variables
@@ -24,14 +27,17 @@ app.use(express.json());
 // Routes
 app.use(healthRoutes);
 app.use(roleTestRoutes);
+app.use(authRoutes);
 app.use(userRoutes);
 app.use(rtoOfficeRoutes);
+app.use(vehicleRoutes);
 app.use(dlApplicationRoutes);
 app.use(drivingLicenseRoutes);
 app.use(challanRoutes);
 app.use(paymentRoutes);
 app.use(appointmentRoutes);
 app.use(notificationRoutes);
+app.use(analyticsRoutes);
 
 // Global error handler
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

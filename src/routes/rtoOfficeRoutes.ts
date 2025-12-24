@@ -1,14 +1,23 @@
 import { Router } from "express";
 import { authMiddleware } from "../middlewares/authMiddleware";
 import { roleMiddleware, ROLES } from "../middlewares/roleMiddleware";
-import { addRtoOffice, listRtoOffices } from "../controllers/rtoOfficeController";
+import {
+  addRtoOffice,
+  listRtoOffices,
+  getRtoOffice,
+  editRtoOffice,
+  removeRtoOffice,
+} from "../controllers/rtoOfficeController";
 
 const router = Router();
 
-// POST - Admin only
-router.post("/rto-offices", authMiddleware, roleMiddleware([ROLES.ADMIN]), addRtoOffice);
+// SUPER_ADMIN only routes
+router.post("/rto/offices", authMiddleware, roleMiddleware([ROLES.SUPER_ADMIN]), addRtoOffice);
+router.put("/rto/offices/:id", authMiddleware, roleMiddleware([ROLES.SUPER_ADMIN]), editRtoOffice);
+router.delete("/rto/offices/:id", authMiddleware, roleMiddleware([ROLES.SUPER_ADMIN]), removeRtoOffice);
 
-// GET - All authenticated users
-router.get("/rto-offices", authMiddleware, listRtoOffices);
+// All authenticated users
+router.get("/rto/offices", authMiddleware, listRtoOffices);
+router.get("/rto/offices/:id", authMiddleware, getRtoOffice);
 
 export default router;

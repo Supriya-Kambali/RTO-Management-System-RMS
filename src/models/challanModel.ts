@@ -8,7 +8,11 @@ export interface Challan {
   violation_type: string;
   amount: number;
   status: string;
+  dispute_reason?: string;
+  dispute_resolved_by?: string;
+  dispute_resolution?: string;
   issued_at: Date;
+  updated_at: Date;
 }
 
 // Create a new challan
@@ -26,6 +30,13 @@ export const createChallan = async (
   const values = [vehicle_id, issued_by, violation_type, amount];
   const result = await pool.query(query, values);
   return result.rows[0];
+};
+
+// Get all challans (Admin)
+export const getAllChallans = async (): Promise<Challan[]> => {
+  const query = `SELECT * FROM challans ORDER BY issued_at DESC`;
+  const result = await pool.query(query);
+  return result.rows;
 };
 
 // Get challans by vehicle id
@@ -55,11 +66,35 @@ export const getChallanById = async (id: string): Promise<Challan | null> => {
 };
 
 // Update challan status
-export const updateChallanStatus = async (
-  id: string,
-  status: string
-): Promise<Challan | null> => {
-  const query = `UPDATE challans SET status = $1 WHERE id = $2 RETURNING *`;
+export const updateChallanStatus = async (id: string, status: string): Promise<Challan | null> => {
+  const query = `UPDATE challans SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING *`;
   const result = await pool.query(query, [status, id]);
+  return result.rows[0] || null;
+};
+
+// Dispute a challan
+export const disputeChallan = async (id: string, reason: string): Promise<Challan | null> => {
+  const query = `
+    UPDATE challans SET status = 'DISPUTED', dispute_reason = $1, updated_at = NOW()
+    WHERE id = $2 AND status = 'UNPAID'
+    RETURNING *
+  `;
+  const result = await pool.query(query, [reason, id]);
+  return result.rows[0] || null;
+};
+
+// Resolve challan dispute
+export const resolveChallanDispute = async (
+  id: string,
+  resolvedBy: string,
+  resolution: string,
+  newStatus: string
+): Promise<Challan | null> => {
+  const query = `
+    UPDATE challans SET status = $1, dispute_resolved_by = $2, dispute_resolution = $3, updated_at = NOW()
+    WHERE id = $4 AND status = 'DISPUTED'
+    RETURNING *
+  `;
+  const result = await pool.query(query, [newStatus, resolvedBy, resolution, id]);
   return result.rows[0] || null;
 };

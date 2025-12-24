@@ -1,12 +1,29 @@
 import { Router } from "express";
 import { authMiddleware } from "../middlewares/authMiddleware";
 import { roleMiddleware, ROLES } from "../middlewares/roleMiddleware";
-import { listUsers, changeUserStatus } from "../controllers/userController";
+import {
+  listUsers,
+  getUser,
+  updateUser,
+  removeUser,
+  assignRole,
+  getProfile,
+  updateProfile,
+} from "../controllers/userController";
 
 const router = Router();
 
-// Admin only routes
-router.get("/users", authMiddleware, roleMiddleware([ROLES.ADMIN]), listUsers);
-router.put("/users/:id/status", authMiddleware, roleMiddleware([ROLES.ADMIN]), changeUserStatus);
+// Profile routes (all authenticated users)
+router.get("/users/profile", authMiddleware, getProfile);
+router.put("/users/profile", authMiddleware, updateProfile);
+
+// SUPER_ADMIN only routes
+router.get("/users", authMiddleware, roleMiddleware([ROLES.SUPER_ADMIN]), listUsers);
+router.delete("/users/:id", authMiddleware, roleMiddleware([ROLES.SUPER_ADMIN]), removeUser);
+router.post("/users/assign-role", authMiddleware, roleMiddleware([ROLES.SUPER_ADMIN]), assignRole);
+
+// Admin routes (SUPER_ADMIN, RTO_ADMIN)
+router.get("/users/:id", authMiddleware, roleMiddleware([ROLES.SUPER_ADMIN, ROLES.RTO_ADMIN]), getUser);
+router.put("/users/:id", authMiddleware, roleMiddleware([ROLES.SUPER_ADMIN, ROLES.RTO_ADMIN]), updateUser);
 
 export default router;

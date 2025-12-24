@@ -5,11 +5,11 @@ import { adminTest, officerTest, citizenTest } from "../controllers/roleTestCont
 
 const router = Router();
 
-// Admin only route
-router.get("/admin/test", authMiddleware, roleMiddleware([ROLES.ADMIN]), adminTest);
+// Super Admin / RTO Admin only route
+router.get("/admin/test", authMiddleware, roleMiddleware([ROLES.SUPER_ADMIN, ROLES.RTO_ADMIN]), adminTest);
 
 // Officer only route
-router.get("/officer/test", authMiddleware, roleMiddleware([ROLES.OFFICER]), officerTest);
+router.get("/officer/test", authMiddleware, roleMiddleware([ROLES.RTO_OFFICER]), officerTest);
 
 // Citizen only route
 router.get("/citizen/test", authMiddleware, roleMiddleware([ROLES.CITIZEN]), citizenTest);
