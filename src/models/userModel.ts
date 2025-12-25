@@ -28,14 +28,17 @@ export const createUser = async (
   email: string,
   password: string,
   role: string = "CITIZEN",
-  phone?: string
+  phone?: string,
+  address?: string,
+  date_of_birth?: string,
+  aadhaar_number?: string
 ): Promise<User> => {
   const query = `
-    INSERT INTO users (name, email, password, role, phone)
-    VALUES ($1, $2, $3, $4, $5)
+    INSERT INTO users (name, email, password, role, phone, address, date_of_birth, aadhaar_number)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     RETURNING *
   `;
-  const values = [name, email, password, role, phone || null];
+  const values = [name, email, password, role, phone || null, address || null, date_of_birth || null, aadhaar_number || null];
   const result = await pool.query(query, values);
   return result.rows[0];
 };

@@ -15,10 +15,10 @@ import pool from "../db";
 // Issue a challan (Police only)
 export const issueChallan = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { vehicle_id, violation_type, amount } = req.body;
+    const { registration_number, violation_type, amount, location } = req.body;
 
-    if (!vehicle_id || !violation_type || !amount) {
-      res.status(400).json({ success: false, message: "vehicle_id, violation_type, and amount are required" });
+    if (!registration_number || !violation_type || !amount) {
+      res.status(400).json({ success: false, message: "registration_number, violation_type, and amount are required" });
       return;
     }
 
@@ -29,17 +29,18 @@ export const issueChallan = async (req: AuthRequest, res: Response): Promise<voi
       return;
     }
 
-    // Verify vehicle exists
-    const vehicleCheck = await pool.query("SELECT id, owner_id FROM vehicles WHERE id = $1", [vehicle_id]);
+    // Find vehicle by registration number
+    const vehicleCheck = await pool.query("SELECT id, owner_id, registration_number FROM vehicles WHERE registration_number = $1", [registration_number]);
     if (vehicleCheck.rows.length === 0) {
-      res.status(404).json({ success: false, message: "Vehicle not found" });
+      res.status(404).json({ success: false, message: "Vehicle not found with this registration number" });
       return;
     }
 
-    const challan = await createChallan(vehicle_id, issued_by, violation_type, amount);
+    const vehicle_id = vehicleCheck.rows[0].id;
+    const challan = await createChallan(vehicle_id, issued_by, violation_type, amount, location);
 
     if (vehicleCheck.rows[0].owner_id) {
-      await createNotification(vehicleCheck.rows[0].owner_id, `A challan of ₹${amount} has been issued for violation: ${violation_type}`);
+      await createNotification(vehicleCheck.rows[0].owner_id, `A challan of ₹${amount} has been issued for vehicle ${registration_number} for violation: ${violation_type}`);
     }
 
     res.status(201).json({ success: true, message: "Challan issued", data: { challan } });

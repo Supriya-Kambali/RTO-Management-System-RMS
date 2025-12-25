@@ -42,7 +42,7 @@ const generateOtp = (): string => {
 // Register (Citizen only)
 export const register = async (req: Request, res: Response) => {
   try {
-    const { name, email, password, phone } = req.body;
+    const { name, email, password, phone, address, date_of_birth, aadhaar_number } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({ success: false, message: "Name, email, and password are required" });
@@ -54,7 +54,7 @@ export const register = async (req: Request, res: Response) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await createUser(name, email, hashedPassword, "CITIZEN", phone);
+    const user = await createUser(name, email, hashedPassword, "CITIZEN", phone, address, date_of_birth, aadhaar_number);
 
     res.status(201).json({
       success: true,
@@ -97,7 +97,20 @@ export const login = async (req: Request, res: Response) => {
       success: true,
       message: "Login successful",
       data: {
-        user: { id: user.id, name: user.name, email: user.email, role: user.role },
+        user: { 
+          id: user.id, 
+          name: user.name, 
+          email: user.email, 
+          role: user.role,
+          phone: user.phone,
+          address: user.address,
+          date_of_birth: user.date_of_birth,
+          aadhaar_number: user.aadhaar_number,
+          status: user.status,
+          rto_office_id: user.rto_office_id,
+          created_at: user.created_at,
+          updated_at: user.updated_at
+        },
         accessToken,
         refreshToken,
       },

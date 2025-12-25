@@ -20,14 +20,15 @@ export const createChallan = async (
   vehicle_id: string,
   issued_by: string,
   violation_type: string,
-  amount: number
+  amount: number,
+  location?: string
 ): Promise<Challan> => {
   const query = `
-    INSERT INTO challans (vehicle_id, issued_by, violation_type, amount, status)
-    VALUES ($1, $2, $3, $4, 'UNPAID')
+    INSERT INTO challans (vehicle_id, issued_by, violation_type, amount, location, status)
+    VALUES ($1, $2, $3, $4, $5, 'UNPAID')
     RETURNING *
   `;
-  const values = [vehicle_id, issued_by, violation_type, amount];
+  const values = [vehicle_id, issued_by, violation_type, amount, location || null];
   const result = await pool.query(query, values);
   return result.rows[0];
 };

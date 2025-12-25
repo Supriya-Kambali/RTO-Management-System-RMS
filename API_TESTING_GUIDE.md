@@ -15,12 +15,14 @@ Before testing, run these SQL commands in your Aiven PostgreSQL console:
 
 ### Connect to Database
 ```
-Host: pg-3dca4120-rahulhanje0-46c4.i.aivencloud.com
-Port: 15035
-Database: defaultdb
-User: avnadmin
+Host: <YOUR_DATABASE_HOST>
+Port: <YOUR_DATABASE_PORT>
+Database: <YOUR_DATABASE_NAME>
+User: <YOUR_DATABASE_USER>
 Password: <YOUR_DATABASE_PASSWORD>
 ```
+
+Note: Get your database credentials from your .env file or your database provider.
 
 ### Create Tables (Run in Order)
 

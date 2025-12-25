@@ -6,6 +6,7 @@ dotenv.config();
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 import express, { Request, Response, NextFunction } from "express";
+import cors from "cors"; // Import the cors middleware
 import healthRoutes from "./routes/healthRoutes";
 import roleTestRoutes from "./routes/roleTestRoutes";
 import authRoutes from "./routes/authRoutes";
@@ -25,6 +26,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
+app.use(cors()); // Enable CORS for all routes
 app.use(express.json());
 
 // Routes
