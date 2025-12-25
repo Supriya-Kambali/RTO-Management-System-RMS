@@ -32,6 +32,22 @@ import MyAppointments from "./pages/citizen/MyAppointments";
 import MyProfile from "./pages/citizen/MyProfile";
 import MyNotifications from "./pages/citizen/MyNotifications";
 
+// Police Pages
+import PoliceDashboard from "./pages/police/PoliceDashboard";
+import IssueChallan from "./pages/police/IssueChallan";
+import ChallanList from "./pages/police/ChallanList";
+import PoliceAnalytics from "./pages/police/PoliceAnalytics";
+
+// Officer Pages
+import OfficerDashboard from "./pages/officer/OfficerDashboard";
+import DocumentVerification from "./pages/officer/DocumentVerification";
+
+// Admin Pages
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import VehicleManagement from "./pages/admin/VehicleManagement";
+import DLManagement from "./pages/admin/DLManagement";
+import AdminAnalytics from "./pages/admin/AdminAnalytics";
+
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -72,12 +88,57 @@ const App = () => (
               <Route path="notifications" element={<MyNotifications />} />
             </Route>
 
-            {/* Other Role Dashboards - placeholder routes */}
-            <Route path="/police/*" element={<ProtectedRoute allowedRoles={['POLICE']}><DashboardLayout /></ProtectedRoute>} />
-            <Route path="/officer/*" element={<ProtectedRoute allowedRoles={['RTO_OFFICER']}><DashboardLayout /></ProtectedRoute>} />
-            <Route path="/admin/*" element={<ProtectedRoute allowedRoles={['RTO_ADMIN']}><DashboardLayout /></ProtectedRoute>} />
-            <Route path="/super-admin/*" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><DashboardLayout /></ProtectedRoute>} />
-            <Route path="/auditor/*" element={<ProtectedRoute allowedRoles={['AUDITOR']}><DashboardLayout /></ProtectedRoute>} />
+            {/* Police Dashboard */}
+            <Route path="/police" element={<ProtectedRoute allowedRoles={['POLICE']}><DashboardLayout /></ProtectedRoute>}>
+              <Route path="dashboard" element={<PoliceDashboard />} />
+              <Route path="issue-challan" element={<IssueChallan />} />
+              <Route path="challans" element={<ChallanList />} />
+              <Route path="analytics" element={<PoliceAnalytics />} />
+              <Route path="profile" element={<MyProfile />} />
+            </Route>
+
+            {/* Officer Dashboard */}
+            <Route path="/officer" element={<ProtectedRoute allowedRoles={['RTO_OFFICER']}><DashboardLayout /></ProtectedRoute>}>
+              <Route path="dashboard" element={<OfficerDashboard />} />
+              <Route path="applications" element={<DocumentVerification />} />
+              <Route path="verification" element={<DocumentVerification />} />
+              <Route path="test-results" element={<OfficerDashboard />} />
+              <Route path="appointments" element={<MyAppointments />} />
+              <Route path="profile" element={<MyProfile />} />
+            </Route>
+
+            {/* Admin Dashboard */}
+            <Route path="/admin" element={<ProtectedRoute allowedRoles={['RTO_ADMIN']}><DashboardLayout /></ProtectedRoute>}>
+              <Route path="dashboard" element={<AdminDashboard />} />
+              <Route path="vehicles" element={<VehicleManagement />} />
+              <Route path="dl-applications" element={<DLManagement />} />
+              <Route path="challans" element={<ChallanList />} />
+              <Route path="payments" element={<PaymentHistory />} />
+              <Route path="appointments" element={<MyAppointments />} />
+              <Route path="notifications" element={<MyNotifications />} />
+              <Route path="analytics" element={<AdminAnalytics />} />
+              <Route path="users" element={<AdminDashboard />} />
+            </Route>
+
+            {/* Super Admin Dashboard */}
+            <Route path="/super-admin" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><DashboardLayout /></ProtectedRoute>}>
+              <Route path="dashboard" element={<AdminDashboard />} />
+              <Route path="offices" element={<AdminDashboard />} />
+              <Route path="users" element={<AdminDashboard />} />
+              <Route path="roles" element={<AdminDashboard />} />
+              <Route path="analytics" element={<AdminAnalytics />} />
+              <Route path="settings" element={<AdminDashboard />} />
+            </Route>
+
+            {/* Auditor Dashboard */}
+            <Route path="/auditor" element={<ProtectedRoute allowedRoles={['AUDITOR']}><DashboardLayout /></ProtectedRoute>}>
+              <Route path="dashboard" element={<AdminDashboard />} />
+              <Route path="analytics" element={<AdminAnalytics />} />
+              <Route path="revenue" element={<AdminAnalytics />} />
+              <Route path="violations" element={<PoliceAnalytics />} />
+              <Route path="payments" element={<PaymentHistory />} />
+              <Route path="profile" element={<MyProfile />} />
+            </Route>
 
             <Route path="*" element={<NotFound />} />
           </Routes>
