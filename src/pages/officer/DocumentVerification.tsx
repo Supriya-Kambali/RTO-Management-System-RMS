@@ -11,19 +11,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { dlService, vehicleService } from '@/services';
 import { DLApplication, Vehicle } from '@/types';
-import { Search, FileCheck, CheckCircle2, XCircle, Clock, AlertTriangle, Loader2, Eye, Info } from 'lucide-react';
-
-// Mock data for demo mode
-const mockDLApplications: DLApplication[] = [
-  { id: 'DL001', user_id: 'user1', rto_office_id: 'rto1', license_type: 'LMV', status: 'PENDING', documents_verified: false, created_at: '2024-12-15', updated_at: '2024-12-15' },
-  { id: 'DL002', user_id: 'user2', rto_office_id: 'rto1', license_type: 'MCWG', status: 'PENDING', documents_verified: false, created_at: '2024-12-18', updated_at: '2024-12-18' },
-  { id: 'DL003', user_id: 'user3', rto_office_id: 'rto1', license_type: 'HMV', status: 'PENDING', documents_verified: false, created_at: '2024-12-20', updated_at: '2024-12-20' },
-];
-
-const mockVehicles: Vehicle[] = [
-  { id: 'v1', owner_id: 'user1', vehicle_type: 'CAR', make: 'Maruti Suzuki', model: 'Swift', year: 2024, color: 'White', engine_number: 'K12N1234567', chassis_number: 'MA3FJEB1S00123456', fuel_type: 'PETROL', registration_number: null, rto_office_id: 'rto1', status: 'PENDING', verified: false, created_at: '2024-12-10', updated_at: '2024-12-10' },
-  { id: 'v2', owner_id: 'user2', vehicle_type: 'MOTORCYCLE', make: 'Honda', model: 'CB350', year: 2024, color: 'Black', engine_number: 'CB350E1234567', chassis_number: 'ME4CB350ELT123456', fuel_type: 'PETROL', registration_number: null, rto_office_id: 'rto1', status: 'PENDING', verified: false, created_at: '2024-12-12', updated_at: '2024-12-12' },
-];
+import { Search, FileCheck, CheckCircle2, XCircle, Clock, AlertTriangle, Loader2, Eye } from 'lucide-react';
 
 const getStatusBadge = (status: string) => {
   if (status.includes('VERIFIED') || status === 'APPROVED') return <Badge className="badge-success"><CheckCircle2 className="h-3 w-3 mr-1" />Verified</Badge>;
@@ -40,7 +28,6 @@ const DocumentVerification: React.FC = () => {
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [verifyNotes, setVerifyNotes] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
-  const [isDemoMode, setIsDemoMode] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -49,26 +36,21 @@ const DocumentVerification: React.FC = () => {
   const fetchData = async () => {
     try {
       const [dlRes, vehRes] = await Promise.all([
-        dlService.listApplications().catch(() => ({ success: false, data: [] })),
-        vehicleService.listVehicles().catch(() => ({ success: false, data: [] })),
+        dlService.listApplications(),
+        vehicleService.listVehicles(),
       ]);
       
-      const dlData = dlRes.success && Array.isArray(dlRes.data) ? dlRes.data.filter((a: DLApplication) => !a.documents_verified) : [];
-      const vehData = vehRes.success && Array.isArray(vehRes.data) ? vehRes.data.filter((v: Vehicle) => !v.verified && v.status === 'PENDING') : [];
+      const dlData = (dlRes.data as any).applications || dlRes.data || [];
+      const vehData = (vehRes.data as any).vehicles || vehRes.data || [];
       
-      if (dlData.length === 0 && vehData.length === 0) {
-        setDlApplications(mockDLApplications);
-        setVehicles(mockVehicles);
-        setIsDemoMode(true);
-      } else {
-        setDlApplications(dlData);
-        setVehicles(vehData);
-      }
-    } catch (error) {
-      console.error(error);
-      setDlApplications(mockDLApplications);
-      setVehicles(mockVehicles);
-      setIsDemoMode(true);
+      const pendingDL = Array.isArray(dlData) ? dlData.filter((a: DLApplication) => !a.documents_verified && a.status === 'PENDING') : [];
+      const pendingVeh = Array.isArray(vehData) ? vehData.filter((v: Vehicle) => !v.verified && v.status === 'PENDING') : [];
+      
+      setDlApplications(pendingDL);
+      setVehicles(pendingVeh);
+    } catch (error: any) {
+      console.error('Error fetching data:', error);
+      toast({ title: 'Error', description: error.response?.data?.message || 'Failed to fetch applications', variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }
@@ -77,24 +59,16 @@ const DocumentVerification: React.FC = () => {
   const handleVerify = async (type: 'dl' | 'vehicle', id: string, verified: boolean) => {
     setIsVerifying(true);
     try {
-      if (isDemoMode) {
-        if (type === 'dl') {
-          setDlApplications(prev => prev.map(a => a.id === id ? { ...a, documents_verified: verified, status: verified ? 'DOCUMENTS_VERIFIED' as const : 'REJECTED' as const } : a));
-        } else {
-          setVehicles(prev => prev.map(v => v.id === id ? { ...v, verified, status: verified ? 'PENDING' as const : 'REJECTED' as const } : v));
-        }
-        toast({ title: 'Demo Mode', description: `Documents ${verified ? 'verified' : 'rejected'} (Demo)` });
+      if (type === 'dl') {
+        await dlService.verifyDocuments(id, verified, verifyNotes);
+        toast({ title: 'Success', description: `DL documents ${verified ? 'verified' : 'rejected'} successfully` });
       } else {
-        if (type === 'dl') {
-          await dlService.verifyDocuments(id, verified, verifyNotes);
-        } else {
-          await vehicleService.verifyDocuments(id, verified, verifyNotes);
-        }
-        toast({ title: 'Success', description: `Documents ${verified ? 'verified' : 'rejected'} successfully` });
-        fetchData();
+        await vehicleService.verifyDocuments(id, verified, verifyNotes);
+        toast({ title: 'Success', description: `Vehicle documents ${verified ? 'verified' : 'rejected'} successfully` });
       }
       setSelectedItem(null);
       setVerifyNotes('');
+      fetchData();
     } catch (error: any) {
       toast({ title: 'Error', description: error.response?.data?.message || 'Verification failed', variant: 'destructive' });
     } finally {
@@ -108,13 +82,6 @@ const DocumentVerification: React.FC = () => {
 
   return (
     <div className="space-y-6 fade-in-up">
-      {isDemoMode && (
-        <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 border border-primary/20">
-          <Info className="h-4 w-4 text-primary" />
-          <span className="text-sm text-primary">Demo Mode: Displaying sample applications for verification</span>
-        </div>
-      )}
-      
       <div>
         <h1 className="text-2xl font-bold">Document Verification</h1>
         <p className="text-muted-foreground">Verify application documents</p>
