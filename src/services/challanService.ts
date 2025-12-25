@@ -2,7 +2,7 @@ import api from './api';
 import { ApiResponse, Challan, ViolationType, DisputeResolution } from '@/types';
 
 export interface IssueChallanData {
-  vehicle_id: string;
+  registration_number: string;
   violation_type: ViolationType;
   amount: number;
   location?: string;

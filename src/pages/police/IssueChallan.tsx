@@ -27,7 +27,7 @@ const IssueChallan: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [formData, setFormData] = useState({
-    vehicle_id: '',
+    registration_number: '',
     violation_type: '' as ViolationType,
     amount: 0,
     location: '',
@@ -55,7 +55,7 @@ const IssueChallan: React.FC = () => {
   };
 
   const resetForm = () => {
-    setFormData({ vehicle_id: '', violation_type: '' as ViolationType, amount: 0, location: '' });
+    setFormData({ registration_number: '', violation_type: '' as ViolationType, amount: 0, location: '' });
     setIsSuccess(false);
   };
 
@@ -99,9 +99,9 @@ const IssueChallan: React.FC = () => {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <Label className="flex items-center gap-2"><Car className="h-4 w-4" />Vehicle ID</Label>
-                <Input placeholder="Enter vehicle UUID or registration number" value={formData.vehicle_id} onChange={(e) => setFormData({ ...formData, vehicle_id: e.target.value })} className="bg-muted/50" required />
-                <p className="text-xs text-muted-foreground">Enter the vehicle's unique ID from the system</p>
+                <Label className="flex items-center gap-2"><Car className="h-4 w-4" />Vehicle Registration Number</Label>
+                <Input placeholder="e.g., MH01AB1234" value={formData.registration_number} onChange={(e) => setFormData({ ...formData, registration_number: e.target.value.toUpperCase() })} className="bg-muted/50" required />
+                <p className="text-xs text-muted-foreground">Enter the vehicle's registration plate number</p>
               </div>
 
               <div className="space-y-2">

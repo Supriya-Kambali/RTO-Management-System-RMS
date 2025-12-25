@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { FileText, Upload, CheckCircle2, Clock, XCircle, Eye, Download, Trash2, Info, Plus, Image, File } from 'lucide-react';
+import { FileText, Upload, CheckCircle2, Clock, XCircle, Eye, Download, Trash2, Plus, Image, File } from 'lucide-react';
 
 interface Document {
   id: string;
@@ -60,15 +60,15 @@ const MyDocuments: React.FC = () => {
 
   const handleUpload = (type: string) => {
     toast({
-      title: 'Demo Mode',
-      description: `Document upload for ${documentTypeLabels[type] || type} would open here`,
+      title: 'Feature Coming Soon',
+      description: `Document upload functionality for ${documentTypeLabels[type] || type} will be available soon`,
     });
   };
 
   const handleView = (doc: Document) => {
     toast({
-      title: 'Demo Mode',
-      description: `Viewing ${doc.name}`,
+      title: 'Feature Coming Soon',
+      description: `Document viewing for ${doc.name} will be available soon`,
     });
   };
 
@@ -86,11 +86,6 @@ const MyDocuments: React.FC = () => {
 
   return (
     <div className="space-y-6 fade-in-up">
-      <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 border border-primary/20">
-        <Info className="h-4 w-4 text-primary" />
-        <span className="text-sm text-primary">Demo Mode: Displaying sample documents</span>
-      </div>
-
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">My Documents</h1>

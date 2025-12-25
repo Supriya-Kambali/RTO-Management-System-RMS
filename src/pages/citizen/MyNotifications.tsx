@@ -5,16 +5,9 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { notificationService } from '@/services';
 import { Notification } from '@/types';
-import { Bell, CheckCircle2, Loader2, Trash2, Info, AlertTriangle, Calendar, CreditCard } from 'lucide-react';
+import { Bell, CheckCircle2, Loader2, Trash2, AlertTriangle, Calendar, CreditCard } from 'lucide-react';
 
-// Mock data for demo mode
-const mockNotifications: Notification[] = [
-  { id: '1', user_id: 'user1', message: 'Your vehicle registration (MH12AB1234) has been approved. RC will be dispatched soon.', read: false, created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), updated_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() },
-  { id: '2', user_id: 'user1', message: 'New challan issued for over speeding. Amount: ₹1,000. Pay within 15 days to avoid penalty.', read: false, created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), updated_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() },
-  { id: '3', user_id: 'user1', message: 'Reminder: Your driving test is scheduled for tomorrow at 10:00 AM at Pune RTO.', read: false, created_at: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(), updated_at: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString() },
-  { id: '4', user_id: 'user1', message: 'Payment of ₹500 received for challan #CH123456. Thank you!', read: true, created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), updated_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString() },
-  { id: '5', user_id: 'user1', message: 'Your driving license application has been submitted successfully. Application ID: DL2024001234', read: true, created_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(), updated_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString() },
-];
+
 
 const getNotificationIcon = (message: string) => {
   if (message.toLowerCase().includes('challan')) return AlertTriangle;
@@ -27,7 +20,6 @@ const MyNotifications: React.FC = () => {
   const { toast } = useToast();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isDemoMode, setIsDemoMode] = useState(false);
 
   useEffect(() => {
     fetchNotifications();
@@ -35,29 +27,27 @@ const MyNotifications: React.FC = () => {
 
   const fetchNotifications = async () => {
     try {
-      const response = await notificationService.getMyNotifications().catch(() => ({ success: false, data: [] }));
-      const data = response.success && Array.isArray(response.data) ? response.data : [];
-      
-      if (data.length === 0) {
-        setNotifications(mockNotifications);
-        setIsDemoMode(true);
+      const response = await notificationService.getMyNotifications();
+      if (response.success && response.data) {
+        // Extract notifications array from nested response structure
+        const notificationsData = (response.data as any).notifications || response.data || [];
+        if (Array.isArray(notificationsData)) {
+          setNotifications(notificationsData);
+        } else {
+          setNotifications([]);
+        }
       } else {
-        setNotifications(data);
+        setNotifications([]);
       }
     } catch (error) {
       console.error('Error fetching notifications:', error);
-      setNotifications(mockNotifications);
-      setIsDemoMode(true);
+      setNotifications([]);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleMarkAsRead = async (id: string) => {
-    if (isDemoMode) {
-      setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-      return;
-    }
     try {
       await notificationService.markAsRead(id);
       setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
@@ -67,12 +57,8 @@ const MyNotifications: React.FC = () => {
   };
 
   const handleMarkAllAsRead = () => {
-    if (isDemoMode) {
-      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-      toast({ title: 'Demo Mode', description: 'All notifications marked as read' });
-      return;
-    }
     notifications.filter(n => !n.read).forEach(n => handleMarkAsRead(n.id));
+    toast({ title: 'Success', description: 'All notifications marked as read' });
   };
 
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -83,13 +69,6 @@ const MyNotifications: React.FC = () => {
 
   return (
     <div className="space-y-6 fade-in-up">
-      {isDemoMode && (
-        <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 border border-primary/20">
-          <Info className="h-4 w-4 text-primary" />
-          <span className="text-sm text-primary">Demo Mode: Displaying sample notifications</span>
-        </div>
-      )}
-      
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Notifications</h1>

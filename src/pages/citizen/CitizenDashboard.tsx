@@ -1,25 +1,117 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
-import { Car, CreditCard, AlertTriangle, Calendar, TrendingUp, Clock, CheckCircle2, ArrowUpRight } from 'lucide-react';
-
-const stats = [
-  { title: 'My Vehicles', value: '2', icon: Car, color: 'from-primary to-secondary', change: '+1 this month' },
-  { title: 'Driving License', value: 'Active', icon: CreditCard, color: 'from-success to-accent', change: 'Valid till 2030' },
-  { title: 'Pending Challans', value: '1', icon: AlertTriangle, color: 'from-warning to-destructive', change: '₹500 due' },
-  { title: 'Appointments', value: '1', icon: Calendar, color: 'from-secondary to-primary', change: 'Dec 28, 2024' },
-];
-
-const recentActivities = [
-  { action: 'Vehicle Registration Approved', time: '2 hours ago', status: 'success' },
-  { action: 'Challan Payment Received', time: '1 day ago', status: 'success' },
-  { action: 'DL Renewal Application Submitted', time: '3 days ago', status: 'pending' },
-  { action: 'Appointment Booked', time: '1 week ago', status: 'success' },
-];
+import { vehicleService, challanService, dlService, appointmentService, notificationService } from '@/services';
+import { Car, CreditCard, AlertTriangle, Calendar, TrendingUp, Clock, CheckCircle2, ArrowUpRight, Loader2, Bell } from 'lucide-react';
 
 const CitizenDashboard: React.FC = () => {
   const { user } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
+  const [dashboardData, setDashboardData] = useState({
+    vehiclesCount: 0,
+    licenseStatus: 'N/A',
+    licenseExpiry: '',
+    pendingChallans: 0,
+    challanAmount: 0,
+    upcomingAppointments: 0,
+    appointmentDate: '',
+    unreadNotifications: 0,
+  });
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      const [vehiclesRes, challansRes, licenseRes, appointmentsRes, notificationsRes] = await Promise.all([
+        vehicleService.getMyVehicles().catch(() => ({ success: false, data: [] })),
+        challanService.getMyChallans().catch(() => ({ success: false, data: [] })),
+        dlService.getMyLicense().catch(() => ({ success: false, data: null })),
+        appointmentService.getMyAppointments().catch(() => ({ success: false, data: [] })),
+        notificationService.getMyNotifications().catch(() => ({ success: false, data: [] })),
+      ]);
+
+      // Extract vehicles
+      const vehicles = Array.isArray((vehiclesRes.data as any)?.vehicles) ? (vehiclesRes.data as any).vehicles : [];
+      
+      // Extract challans
+      const challans = Array.isArray((challansRes.data as any)?.challans) ? (challansRes.data as any).challans : [];
+      const pendingChallans = challans.filter((c: any) => c.status === 'UNPAID');
+      const totalChallanAmount = pendingChallans.reduce((sum: number, c: any) => sum + (c.amount || 0), 0);
+      
+      // Extract license
+      const license = (licenseRes.data as any)?.license || licenseRes.data;
+      const licenseStatus = license?.status || 'Not Applied';
+      const licenseExpiry = license?.expiry_date ? new Date(license.expiry_date).getFullYear().toString() : '';
+      
+      // Extract appointments
+      const appointments = Array.isArray((appointmentsRes.data as any)?.appointments) ? (appointmentsRes.data as any).appointments : [];
+      const upcomingAppts = appointments.filter((a: any) => 
+        a.status === 'SCHEDULED' && new Date(a.appointment_date) > new Date()
+      );
+      const nextAppt = upcomingAppts[0];
+      
+      // Extract notifications
+      const notifications = Array.isArray((notificationsRes.data as any)?.notifications) ? (notificationsRes.data as any).notifications : [];
+      const unreadCount = notifications.filter((n: any) => !n.read).length;
+
+      setDashboardData({
+        vehiclesCount: vehicles.length,
+        licenseStatus,
+        licenseExpiry: licenseExpiry ? `Valid till ${licenseExpiry}` : 'N/A',
+        pendingChallans: pendingChallans.length,
+        challanAmount: totalChallanAmount,
+        upcomingAppointments: upcomingAppts.length,
+        appointmentDate: nextAppt ? new Date(nextAppt.appointment_date).toLocaleDateString() : 'None',
+        unreadNotifications: unreadCount,
+      });
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const stats = [
+    { 
+      title: 'My Vehicles', 
+      value: dashboardData.vehiclesCount.toString(), 
+      icon: Car, 
+      color: 'from-primary to-secondary', 
+      change: dashboardData.vehiclesCount > 0 ? `${dashboardData.vehiclesCount} registered` : 'No vehicles' 
+    },
+    { 
+      title: 'Driving License', 
+      value: dashboardData.licenseStatus, 
+      icon: CreditCard, 
+      color: 'from-success to-accent', 
+      change: dashboardData.licenseExpiry 
+    },
+    { 
+      title: 'Pending Challans', 
+      value: dashboardData.pendingChallans.toString(), 
+      icon: AlertTriangle, 
+      color: 'from-warning to-destructive', 
+      change: dashboardData.challanAmount > 0 ? `₹${dashboardData.challanAmount.toLocaleString()} due` : 'All clear' 
+    },
+    { 
+      title: 'Appointments', 
+      value: dashboardData.upcomingAppointments.toString(), 
+      icon: Calendar, 
+      color: 'from-secondary to-primary', 
+      change: dashboardData.appointmentDate 
+    },
+  ];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 fade-in-up">
@@ -68,20 +160,32 @@ const CitizenDashboard: React.FC = () => {
 
         <Card className="glass-card">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Clock className="h-5 w-5 text-primary" />Recent Activity</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Bell className="h-5 w-5 text-primary" />
+              Notifications
+              {dashboardData.unreadNotifications > 0 && (
+                <span className="ml-auto text-sm bg-primary/20 text-primary px-2 py-1 rounded-full">
+                  {dashboardData.unreadNotifications} unread
+                </span>
+              )}
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {recentActivities.map((activity, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <div className={`h-8 w-8 rounded-full flex items-center justify-center ${activity.status === 'success' ? 'bg-success/20 text-success' : 'bg-warning/20 text-warning'}`}>
-                  <CheckCircle2 className="h-4 w-4" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">{activity.action}</p>
-                  <p className="text-xs text-muted-foreground">{activity.time}</p>
-                </div>
+          <CardContent>
+            {dashboardData.unreadNotifications > 0 ? (
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  You have {dashboardData.unreadNotifications} unread notification{dashboardData.unreadNotifications !== 1 ? 's' : ''}
+                </p>
+                <a href="/citizen/notifications" className="text-sm text-primary hover:underline inline-block">
+                  View all notifications →
+                </a>
               </div>
-            ))}
+            ) : (
+              <div className="py-8 text-center">
+                <CheckCircle2 className="h-8 w-8 text-success mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">No new notifications</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

@@ -318,6 +318,10 @@ const MyVehicles: React.FC = () => {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
+                  <Label className="text-muted-foreground">Vehicle ID</Label>
+                  <p className="font-medium">{selectedVehicle.id}</p>
+                </div>
+                <div className="space-y-2">
                   <Label className="text-muted-foreground">Vehicle Type</Label>
                   <p className="font-medium">{selectedVehicle.vehicle_type}</p>
                 </div>
