@@ -31,6 +31,7 @@ import PaymentHistory from "./pages/citizen/PaymentHistory";
 import MyAppointments from "./pages/citizen/MyAppointments";
 import MyProfile from "./pages/citizen/MyProfile";
 import MyNotifications from "./pages/citizen/MyNotifications";
+import MyDocuments from "./pages/citizen/MyDocuments";
 
 // Police Pages
 import PoliceDashboard from "./pages/police/PoliceDashboard";
@@ -41,6 +42,7 @@ import PoliceAnalytics from "./pages/police/PoliceAnalytics";
 // Officer Pages
 import OfficerDashboard from "./pages/officer/OfficerDashboard";
 import DocumentVerification from "./pages/officer/DocumentVerification";
+import TestResults from "./pages/officer/TestResults";
 
 // Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -52,14 +54,19 @@ import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import SuperAdminDashboard from "./pages/superadmin/SuperAdminDashboard";
 import RTOOfficeManagement from "./pages/superadmin/RTOOfficeManagement";
 import UserManagement from "./pages/superadmin/UserManagement";
+import SystemSettings from "./pages/superadmin/SystemSettings";
 
 // Auditor Pages
 import AuditorDashboard from "./pages/auditor/AuditorDashboard";
 import RevenueReports from "./pages/auditor/RevenueReports";
 import PaymentsAudit from "./pages/auditor/PaymentsAudit";
+import ViolationReports from "./pages/auditor/ViolationReports";
 
+// System Pages
 import NotFound from "./pages/NotFound";
 import Unauthorized from "./pages/Unauthorized";
+import ServerError from "./pages/ServerError";
+import Maintenance from "./pages/Maintenance";
 
 const queryClient = new QueryClient();
 
@@ -95,7 +102,7 @@ const App = () => (
               <Route path="challans" element={<MyChallans />} />
               <Route path="payments" element={<PaymentHistory />} />
               <Route path="appointments" element={<MyAppointments />} />
-              <Route path="documents" element={<CitizenDashboard />} />
+              <Route path="documents" element={<MyDocuments />} />
               <Route path="notifications" element={<MyNotifications />} />
             </Route>
 
@@ -113,7 +120,7 @@ const App = () => (
               <Route path="dashboard" element={<OfficerDashboard />} />
               <Route path="applications" element={<DocumentVerification />} />
               <Route path="verification" element={<DocumentVerification />} />
-              <Route path="test-results" element={<OfficerDashboard />} />
+              <Route path="test-results" element={<TestResults />} />
               <Route path="appointments" element={<MyAppointments />} />
               <Route path="profile" element={<MyProfile />} />
             </Route>
@@ -138,7 +145,7 @@ const App = () => (
               <Route path="users" element={<UserManagement />} />
               <Route path="roles" element={<UserManagement />} />
               <Route path="analytics" element={<AdminAnalytics />} />
-              <Route path="settings" element={<SuperAdminDashboard />} />
+              <Route path="settings" element={<SystemSettings />} />
             </Route>
 
             {/* Auditor Dashboard */}
@@ -146,12 +153,15 @@ const App = () => (
               <Route path="dashboard" element={<AuditorDashboard />} />
               <Route path="analytics" element={<AdminAnalytics />} />
               <Route path="revenue" element={<RevenueReports />} />
-              <Route path="violations" element={<PoliceAnalytics />} />
+              <Route path="violations" element={<ViolationReports />} />
               <Route path="payments" element={<PaymentsAudit />} />
               <Route path="profile" element={<MyProfile />} />
             </Route>
 
+            {/* System Routes */}
             <Route path="/unauthorized" element={<Unauthorized />} />
+            <Route path="/server-error" element={<ServerError />} />
+            <Route path="/maintenance" element={<Maintenance />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
