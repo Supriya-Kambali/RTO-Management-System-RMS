@@ -28,8 +28,8 @@ const mockAppointments: Appointment[] = [
 ];
 
 const mockRTOOffices: RTOOffice[] = [
-  { id: 'rto1', name: 'Pune RTO', code: 'MH12', address: 'Sangamwadi, Pune', city: 'Pune', state: 'Maharashtra', phone: '020-26161251', email: 'rto.pune@mh.gov.in', created_at: '2020-01-01', updated_at: '2020-01-01' },
-  { id: 'rto2', name: 'Mumbai RTO', code: 'MH01', address: 'Tardeo, Mumbai', city: 'Mumbai', state: 'Maharashtra', phone: '022-23521001', email: 'rto.mumbai@mh.gov.in', created_at: '2020-01-01', updated_at: '2020-01-01' },
+  { id: 'rto1', name: 'Pune RTO', code: 'MH12', address: 'Sangamwadi, Pune', city: 'Pune', state: 'Maharashtra', pincode: '411001', phone: '020-26161251', email: 'rto.pune@mh.gov.in', status: 'ACTIVE', created_at: '2020-01-01', updated_at: '2020-01-01' },
+  { id: 'rto2', name: 'Mumbai RTO', code: 'MH01', address: 'Tardeo, Mumbai', city: 'Mumbai', state: 'Maharashtra', pincode: '400034', phone: '022-23521001', email: 'rto.mumbai@mh.gov.in', status: 'ACTIVE', created_at: '2020-01-01', updated_at: '2020-01-01' },
 ];
 
 const getStatusBadge = (status: string) => {

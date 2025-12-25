@@ -10,11 +10,11 @@ import { Wallet, CreditCard, Loader2, CheckCircle2, XCircle, Clock, ArrowDownRig
 
 // Mock data for demo mode
 const mockPayments: Payment[] = [
-  { id: 'PAY001', user_id: 'user1', amount: 1000, payment_type: 'CHALLAN', status: 'COMPLETED', payment_method: 'UPI', transaction_id: 'TXN2024123001', created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), updated_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() },
-  { id: 'PAY002', user_id: 'user1', amount: 500, payment_type: 'DL_FEE', status: 'COMPLETED', payment_method: 'Debit Card', transaction_id: 'TXN2024122901', created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), updated_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString() },
-  { id: 'PAY003', user_id: 'user1', amount: 2500, payment_type: 'VEHICLE_REG', status: 'COMPLETED', payment_method: 'Net Banking', transaction_id: 'TXN2024121501', created_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(), updated_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString() },
-  { id: 'PAY004', user_id: 'user1', amount: 300, payment_type: 'CHALLAN', status: 'PENDING', payment_method: 'UPI', transaction_id: null, created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), updated_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString() },
-  { id: 'PAY005', user_id: 'user1', amount: 1500, payment_type: 'DL_RENEWAL', status: 'REFUNDED', payment_method: 'Credit Card', transaction_id: 'TXN2024120101', refund_id: 'REF2024120501', created_at: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), updated_at: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toISOString() },
+  { id: 'PAY001', user_id: 'user1', challan_id: 'CH001', amount: 1000, status: 'COMPLETED', payment_method: 'UPI', transaction_id: 'TXN2024123001', created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), updated_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() },
+  { id: 'PAY002', user_id: 'user1', amount: 500, status: 'COMPLETED', payment_method: 'CARD', transaction_id: 'TXN2024122901', created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), updated_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString() },
+  { id: 'PAY003', user_id: 'user1', amount: 2500, status: 'COMPLETED', payment_method: 'NETBANKING', transaction_id: 'TXN2024121501', created_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(), updated_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString() },
+  { id: 'PAY004', user_id: 'user1', challan_id: 'CH002', amount: 300, status: 'PENDING', payment_method: 'UPI', created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), updated_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString() },
+  { id: 'PAY005', user_id: 'user1', amount: 1500, status: 'REFUNDED', payment_method: 'CARD', transaction_id: 'TXN2024120101', refund_reason: 'Duplicate payment', created_at: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), updated_at: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toISOString() },
 ];
 
 const getStatusBadge = (status: string) => {
@@ -27,12 +27,11 @@ const getStatusBadge = (status: string) => {
   }
 };
 
-const paymentTypeLabels: Record<string, string> = {
-  CHALLAN: 'Challan Payment',
-  DL_FEE: 'DL Application Fee',
-  DL_RENEWAL: 'DL Renewal Fee',
-  VEHICLE_REG: 'Vehicle Registration',
-  OTHER: 'Other',
+const paymentMethodLabels: Record<string, string> = {
+  CARD: 'Card Payment',
+  UPI: 'UPI Payment',
+  NETBANKING: 'Net Banking',
+  WALLET: 'Wallet',
 };
 
 const PaymentHistory: React.FC = () => {
@@ -154,7 +153,7 @@ const PaymentHistory: React.FC = () => {
                         <CreditCard className="h-6 w-6" />
                       </div>
                       <div>
-                        <p className="font-semibold">{paymentTypeLabels[payment.payment_type] || payment.payment_type}</p>
+                        <p className="font-semibold">{payment.challan_id ? 'Challan Payment' : 'Service Fee'}</p>
                         <p className="text-sm text-muted-foreground">{payment.payment_method || 'N/A'} • {new Date(payment.created_at).toLocaleDateString()}</p>
                         {payment.transaction_id && <p className="text-xs text-muted-foreground">TXN: {payment.transaction_id}</p>}
                       </div>

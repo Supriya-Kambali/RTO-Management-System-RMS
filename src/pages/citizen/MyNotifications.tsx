@@ -9,20 +9,18 @@ import { Bell, CheckCircle2, Loader2, Trash2, Info, AlertTriangle, Calendar, Cre
 
 // Mock data for demo mode
 const mockNotifications: Notification[] = [
-  { id: '1', user_id: 'user1', type: 'GENERAL', message: 'Your vehicle registration (MH12AB1234) has been approved. RC will be dispatched soon.', read: false, created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() },
-  { id: '2', user_id: 'user1', type: 'CHALLAN', message: 'New challan issued for over speeding. Amount: ₹1,000. Pay within 15 days to avoid penalty.', read: false, created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() },
-  { id: '3', user_id: 'user1', type: 'APPOINTMENT', message: 'Reminder: Your driving test is scheduled for tomorrow at 10:00 AM at Pune RTO.', read: false, created_at: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString() },
-  { id: '4', user_id: 'user1', type: 'PAYMENT', message: 'Payment of ₹500 received for challan #CH123456. Thank you!', read: true, created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString() },
-  { id: '5', user_id: 'user1', type: 'GENERAL', message: 'Your driving license application has been submitted successfully. Application ID: DL2024001234', read: true, created_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString() },
+  { id: '1', user_id: 'user1', message: 'Your vehicle registration (MH12AB1234) has been approved. RC will be dispatched soon.', read: false, created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), updated_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() },
+  { id: '2', user_id: 'user1', message: 'New challan issued for over speeding. Amount: ₹1,000. Pay within 15 days to avoid penalty.', read: false, created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), updated_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() },
+  { id: '3', user_id: 'user1', message: 'Reminder: Your driving test is scheduled for tomorrow at 10:00 AM at Pune RTO.', read: false, created_at: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(), updated_at: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString() },
+  { id: '4', user_id: 'user1', message: 'Payment of ₹500 received for challan #CH123456. Thank you!', read: true, created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), updated_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString() },
+  { id: '5', user_id: 'user1', message: 'Your driving license application has been submitted successfully. Application ID: DL2024001234', read: true, created_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(), updated_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString() },
 ];
 
-const getNotificationIcon = (type: string) => {
-  switch (type) {
-    case 'CHALLAN': return AlertTriangle;
-    case 'APPOINTMENT': return Calendar;
-    case 'PAYMENT': return CreditCard;
-    default: return Bell;
-  }
+const getNotificationIcon = (message: string) => {
+  if (message.toLowerCase().includes('challan')) return AlertTriangle;
+  if (message.toLowerCase().includes('appointment') || message.toLowerCase().includes('test')) return Calendar;
+  if (message.toLowerCase().includes('payment')) return CreditCard;
+  return Bell;
 };
 
 const MyNotifications: React.FC = () => {
@@ -115,7 +113,7 @@ const MyNotifications: React.FC = () => {
       ) : (
         <div className="space-y-3">
           {notifications.map((notification, index) => {
-            const IconComponent = getNotificationIcon(notification.type);
+            const IconComponent = getNotificationIcon(notification.message);
             return (
               <motion.div key={notification.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }}>
                 <Card className={`glass-card-hover cursor-pointer transition-all ${!notification.read ? 'border-primary/30 bg-primary/5' : ''}`} onClick={() => !notification.read && handleMarkAsRead(notification.id)}>
