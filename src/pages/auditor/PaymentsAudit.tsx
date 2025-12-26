@@ -13,7 +13,7 @@ import { Search, Download, Filter, Loader2, CheckCircle2, XCircle, Clock, ArrowU
 
 const getStatusBadge = (status: string) => {
   switch (status) {
-    case 'COMPLETED': return <Badge className="badge-success"><CheckCircle2 className="h-3 w-3 mr-1" />Completed</Badge>;
+    case 'SUCCESS': return <Badge className="badge-success"><CheckCircle2 className="h-3 w-3 mr-1" />Success</Badge>;
     case 'PENDING': return <Badge className="badge-warning"><Clock className="h-3 w-3 mr-1" />Pending</Badge>;
     case 'FAILED': return <Badge className="badge-error"><XCircle className="h-3 w-3 mr-1" />Failed</Badge>;
     case 'REFUNDED': return <Badge className="badge-info"><ArrowUpRight className="h-3 w-3 mr-1" />Refunded</Badge>;
@@ -21,25 +21,53 @@ const getStatusBadge = (status: string) => {
   }
 };
 
-// Mock data for audit
-const mockPayments: Payment[] = [
-  { id: '1', user_id: 'u1', amount: 5000, status: 'COMPLETED', payment_method: 'UPI', transaction_id: 'TXN001234567', created_at: '2024-12-20T10:30:00Z', updated_at: '2024-12-20T10:30:00Z' },
-  { id: '2', user_id: 'u2', amount: 2500, status: 'COMPLETED', payment_method: 'CARD', transaction_id: 'TXN001234568', created_at: '2024-12-20T09:15:00Z', updated_at: '2024-12-20T09:15:00Z' },
-  { id: '3', user_id: 'u3', amount: 1000, status: 'PENDING', payment_method: 'NETBANKING', created_at: '2024-12-19T16:45:00Z', updated_at: '2024-12-19T16:45:00Z' },
-  { id: '4', user_id: 'u4', amount: 7500, status: 'COMPLETED', payment_method: 'UPI', transaction_id: 'TXN001234570', created_at: '2024-12-19T14:20:00Z', updated_at: '2024-12-19T14:20:00Z' },
-  { id: '5', user_id: 'u5', amount: 3000, status: 'FAILED', payment_method: 'CARD', created_at: '2024-12-19T11:00:00Z', updated_at: '2024-12-19T11:00:00Z' },
-  { id: '6', user_id: 'u6', amount: 1500, status: 'REFUNDED', payment_method: 'UPI', transaction_id: 'TXN001234572', refund_reason: 'Duplicate payment', created_at: '2024-12-18T10:30:00Z', updated_at: '2024-12-18T10:30:00Z' },
-];
-
 const PaymentsAudit: React.FC = () => {
   const { toast } = useToast();
-  const [payments, setPayments] = useState<Payment[]>(mockPayments);
-  const [isLoading, setIsLoading] = useState(false);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
 
+  useEffect(() => {
+    fetchPayments();
+  }, []);
+
+  const fetchPayments = async () => {
+    try {
+      const response = await paymentService.listPayments();
+      if (response.success && response.data) {
+        const paymentsData = (response.data as any).payments || response.data || [];
+        setPayments(Array.isArray(paymentsData) ? paymentsData : []);
+      }
+    } catch (error) {
+      console.error('Error fetching payments:', error);
+      toast({ title: 'Error', description: 'Failed to fetch payments', variant: 'destructive' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleExport = () => {
-    toast({ title: 'Exporting', description: 'Payment audit report will be downloaded shortly' });
+    const headers = ['Transaction ID', 'Amount', 'Method', 'Status', 'Date'];
+    const csvContent = [
+      headers.join(','),
+      ...filteredPayments.map(p => [
+        p.transaction_id || `PAY-${p.id.slice(0, 8)}`,
+        p.amount,
+        p.payment_method || 'N/A',
+        p.status,
+        new Date(p.created_at).toLocaleString()
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `payments_audit_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    
+    toast({ title: 'Exported', description: 'Payment audit report downloaded' });
   };
 
   const filteredPayments = payments.filter(payment => {
@@ -48,9 +76,13 @@ const PaymentsAudit: React.FC = () => {
     return matchesSearch && matchesStatus;
   });
 
-  const totalCompleted = payments.filter(p => p.status === 'COMPLETED').reduce((sum, p) => sum + p.amount, 0);
-  const totalPending = payments.filter(p => p.status === 'PENDING').reduce((sum, p) => sum + p.amount, 0);
-  const totalRefunded = payments.filter(p => p.status === 'REFUNDED').reduce((sum, p) => sum + p.amount, 0);
+  const totalCompleted = payments.filter(p => p.status === 'SUCCESS').reduce((sum, p) => sum + Number(p.amount), 0);
+  const totalPending = payments.filter(p => p.status === 'PENDING').reduce((sum, p) => sum + Number(p.amount), 0);
+  const totalRefunded = payments.filter(p => p.status === 'REFUNDED').reduce((sum, p) => sum + Number(p.amount), 0);
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+  }
 
   return (
     <div className="space-y-6 fade-in-up">
@@ -102,7 +134,7 @@ const PaymentsAudit: React.FC = () => {
           <SelectTrigger className="w-48 bg-muted/50"><SelectValue placeholder="Filter by status" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="ALL">All Status</SelectItem>
-            <SelectItem value="COMPLETED">Completed</SelectItem>
+            <SelectItem value="SUCCESS">Success</SelectItem>
             <SelectItem value="PENDING">Pending</SelectItem>
             <SelectItem value="FAILED">Failed</SelectItem>
             <SelectItem value="REFUNDED">Refunded</SelectItem>
@@ -143,10 +175,10 @@ const PaymentsAudit: React.FC = () => {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="font-semibold">₹{payment.amount.toLocaleString()}</TableCell>
+                    <TableCell className="font-semibold">₹{Number(payment.amount).toLocaleString()}</TableCell>
                     <TableCell><Badge variant="outline">{payment.payment_method || 'N/A'}</Badge></TableCell>
                     <TableCell>{getStatusBadge(payment.status)}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{new Date(payment.created_at).toLocaleString()}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{new Date(payment.paid_at || payment.created_at).toLocaleString()}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{payment.refund_reason || '-'}</TableCell>
                   </TableRow>
                 ))

@@ -135,7 +135,7 @@ const App = () => (
               <Route path="vehicles" element={<VehicleManagement />} />
               <Route path="dl-applications" element={<DLManagement />} />
               <Route path="challans" element={<ChallanList />} />
-              <Route path="payments" element={<PaymentHistory />} />
+              <Route path="payments" element={<PaymentsAudit />} />
               <Route path="appointments" element={<Appointments />} />
               <Route path="notifications" element={<MyNotifications />} />
               <Route path="analytics" element={<AdminAnalytics />} />

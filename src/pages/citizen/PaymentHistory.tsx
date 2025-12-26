@@ -12,7 +12,7 @@ import { Wallet, CreditCard, Loader2, CheckCircle2, XCircle, Clock, ArrowDownRig
 
 const getStatusBadge = (status: string) => {
   switch (status) {
-    case 'COMPLETED': return <Badge className="badge-success"><CheckCircle2 className="h-3 w-3 mr-1" />Completed</Badge>;
+    case 'SUCCESS': return <Badge className="badge-success"><CheckCircle2 className="h-3 w-3 mr-1" />Success</Badge>;
     case 'PENDING': return <Badge className="badge-warning"><Clock className="h-3 w-3 mr-1" />Pending</Badge>;
     case 'FAILED': return <Badge className="badge-error"><XCircle className="h-3 w-3 mr-1" />Failed</Badge>;
     case 'REFUNDED': return <Badge className="badge-info"><ArrowUpRight className="h-3 w-3 mr-1" />Refunded</Badge>;
@@ -62,8 +62,8 @@ const PaymentHistory: React.FC = () => {
     toast({ title: 'Info', description: 'Receipt download will be implemented' });
   };
 
-  const totalPaid = payments.filter(p => p.status === 'COMPLETED').reduce((sum, p) => sum + p.amount, 0);
-  const totalPending = payments.filter(p => p.status === 'PENDING').reduce((sum, p) => sum + p.amount, 0);
+  const totalPaid = payments.filter(p => p.status === 'SUCCESS').reduce((sum, p) => sum + Number(p.amount), 0);
+  const totalPending = payments.filter(p => p.status === 'PENDING').reduce((sum, p) => sum + Number(p.amount), 0);
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
@@ -136,7 +136,7 @@ const PaymentHistory: React.FC = () => {
                 <CardContent className="py-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${payment.status === 'COMPLETED' ? 'bg-success/20 text-success' : payment.status === 'PENDING' ? 'bg-warning/20 text-warning' : payment.status === 'REFUNDED' ? 'bg-info/20 text-info' : 'bg-destructive/20 text-destructive'}`}>
+                      <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${payment.status === 'SUCCESS' ? 'bg-success/20 text-success' : payment.status === 'PENDING' ? 'bg-warning/20 text-warning' : payment.status === 'REFUNDED' ? 'bg-info/20 text-info' : 'bg-destructive/20 text-destructive'}`}>
                         <CreditCard className="h-6 w-6" />
                       </div>
                       <div>
@@ -147,10 +147,10 @@ const PaymentHistory: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-right">
-                        <p className="text-xl font-bold">₹{payment.amount.toLocaleString()}</p>
+                        <p className="text-xl font-bold">₹{Number(payment.amount).toLocaleString()}</p>
                         {getStatusBadge(payment.status)}
                       </div>
-                      {payment.status === 'COMPLETED' && (
+                      {payment.status === 'SUCCESS' && (
                         <Button variant="ghost" size="icon" onClick={() => handleDownloadReceipt(payment)}><Download className="h-4 w-4" /></Button>
                       )}
                     </div>

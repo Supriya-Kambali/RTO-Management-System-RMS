@@ -26,7 +26,7 @@ export type ChallanStatus = 'UNPAID' | 'PAID' | 'DISPUTED' | 'RESOLVED';
 export type ViolationType = 'OVER_SPEEDING' | 'SIGNAL_JUMP' | 'NO_HELMET' | 'NO_SEATBELT' | 'DRUNK_DRIVING' | 'WRONG_PARKING' | 'NO_LICENSE' | 'NO_INSURANCE' | 'OTHER';
 
 // Payment Status
-export type PaymentStatus = 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
+export type PaymentStatus = 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED';
 
 // Payment Method
 export type PaymentMethod = 'CARD' | 'UPI' | 'NETBANKING' | 'WALLET';
@@ -159,6 +159,7 @@ export interface DLApplication {
 export interface Challan {
   id: string;
   vehicle_id: string;
+  vehicle_number?: string;
   issued_by: string;
   violation_type: ViolationType;
   amount: number;
@@ -167,6 +168,11 @@ export interface Challan {
   dispute_resolution?: DisputeResolution;
   resolution_notes?: string;
   location?: string;
+  description?: string;
+  transaction_id?: string;
+  payment_method?: string;
+  paid_at?: string;
+  issued_at?: string;
   created_at: string;
   updated_at: string;
 }
@@ -180,6 +186,7 @@ export interface Payment {
   payment_method?: PaymentMethod;
   transaction_id?: string;
   status: PaymentStatus;
+  paid_at?: string;
   refund_reason?: string;
   created_at: string;
   updated_at: string;

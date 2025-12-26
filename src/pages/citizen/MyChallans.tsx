@@ -6,10 +6,27 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { challanService } from '@/services';
-import { Challan } from '@/types';
-import { AlertTriangle, CreditCard, FileText, Loader2, CheckCircle2, Clock, XCircle, MapPin } from 'lucide-react';
+import { challanService, paymentService } from '@/services';
+import { Challan, PaymentMethod } from '@/types';
+import { 
+  AlertTriangle, 
+  CreditCard, 
+  FileText, 
+  Loader2, 
+  CheckCircle2, 
+  Clock, 
+  XCircle, 
+  MapPin,
+  Smartphone,
+  Building2,
+  Wallet,
+  Shield,
+  Eye,
+  Download
+} from 'lucide-react';
 
 
 
@@ -35,6 +52,13 @@ const violationLabels: Record<string, string> = {
   OTHER: 'Other',
 };
 
+const paymentMethods = [
+  { id: 'UPI', name: 'UPI', icon: Smartphone, description: 'Google Pay, PhonePe, Paytm' },
+  { id: 'CARD', name: 'Credit/Debit Card', icon: CreditCard, description: 'Visa, Mastercard, RuPay' },
+  { id: 'NETBANKING', name: 'Net Banking', icon: Building2, description: 'All major banks' },
+  { id: 'WALLET', name: 'Wallet', icon: Wallet, description: 'Paytm, Amazon Pay' },
+];
+
 const MyChallans: React.FC = () => {
   const { toast } = useToast();
   const [challans, setChallans] = useState<Challan[]>([]);
@@ -42,6 +66,19 @@ const MyChallans: React.FC = () => {
   const [selectedChallan, setSelectedChallan] = useState<Challan | null>(null);
   const [disputeReason, setDisputeReason] = useState('');
   const [isDisputing, setIsDisputing] = useState(false);
+  
+  // Payment states
+  const [paymentChallan, setPaymentChallan] = useState<Challan | null>(null);
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('UPI');
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [paymentStep, setPaymentStep] = useState<'select' | 'processing' | 'success'>('select');
+  const [upiId, setUpiId] = useState('');
+  const [cardNumber, setCardNumber] = useState('');
+  
+  // Payment details dialog
+  const [isPaymentDetailsOpen, setIsPaymentDetailsOpen] = useState(false);
+  const [viewingChallan, setViewingChallan] = useState<Challan | null>(null);
 
   useEffect(() => {
     fetchChallans();
@@ -87,11 +124,183 @@ const MyChallans: React.FC = () => {
     }
   };
 
-  const handlePay = (challan: Challan) => {
-    toast({ title: 'Info', description: 'Payment gateway integration required' });
+  const handlePayClick = (challan: Challan) => {
+    setPaymentChallan(challan);
+    setPaymentStep('select');
+    setPaymentMethod('UPI');
+    setUpiId('');
+    setCardNumber('');
+    setIsPaymentDialogOpen(true);
   };
 
-  const totalUnpaid = challans.filter(c => c.status === 'UNPAID').reduce((sum, c) => sum + c.amount, 0);
+  const handlePayment = async () => {
+    if (!paymentChallan) return;
+    
+    setIsProcessingPayment(true);
+    setPaymentStep('processing');
+    
+    try {
+      // Simulate payment gateway processing
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Call the backend to process payment
+      const response = await paymentService.payChallan(
+        paymentChallan.id, 
+        paymentMethod,
+        `TXN${Date.now()}${Math.random().toString(36).substr(2, 9).toUpperCase()}`
+      );
+      
+      if (response.success) {
+        setPaymentStep('success');
+        // Wait a moment to show success state
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        toast({ 
+          title: 'Payment Successful!', 
+          description: `₹${paymentChallan.amount} paid successfully via ${paymentMethod}` 
+        });
+        
+        fetchChallans();
+        setIsPaymentDialogOpen(false);
+        setPaymentChallan(null);
+      }
+    } catch (error: any) {
+      setPaymentStep('select');
+      toast({ 
+        title: 'Payment Failed', 
+        description: error.response?.data?.message || 'Failed to process payment. Please try again.', 
+        variant: 'destructive' 
+      });
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
+
+  const handleViewPaymentDetails = (challan: Challan) => {
+    setViewingChallan(challan);
+    setIsPaymentDetailsOpen(true);
+  };
+
+  const handleDownloadReceipt = (challan: Challan) => {
+    // Generate receipt HTML
+    const receiptHTML = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Payment Receipt</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
+          .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
+          .header h1 { margin: 0; color: #333; }
+          .header p { margin: 5px 0; color: #666; }
+          .section { margin-bottom: 25px; }
+          .section-title { font-weight: bold; color: #333; margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+          .row { display: flex; justify-content: space-between; padding: 8px 0; }
+          .label { color: #666; }
+          .value { font-weight: bold; color: #333; }
+          .amount { font-size: 24px; color: #10b981; }
+          .footer { margin-top: 40px; padding-top: 20px; border-top: 2px solid #333; text-align: center; color: #666; font-size: 12px; }
+          .stamp { text-align: right; margin-top: 30px; font-style: italic; color: #666; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>🚗 RTO Management System</h1>
+          <p>Traffic Challan Payment Receipt</p>
+          <p>Regional Transport Office</p>
+        </div>
+        
+        <div class="section">
+          <div class="section-title">PAYMENT DETAILS</div>
+          <div class="row">
+            <span class="label">Receipt No:</span>
+            <span class="value">RTO-${challan.id.slice(0, 8).toUpperCase()}</span>
+          </div>
+          <div class="row">
+            <span class="label">Payment Date:</span>
+            <span class="value">${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
+          </div>
+          <div class="row">
+            <span class="label">Payment Time:</span>
+            <span class="value">${new Date().toLocaleTimeString('en-IN')}</span>
+          </div>
+          <div class="row">
+            <span class="label">Transaction ID:</span>
+            <span class="value">TXN${Date.now()}</span>
+          </div>
+          <div class="row">
+            <span class="label">Payment Method:</span>
+            <span class="value">${challan.payment_method || 'UPI'}</span>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">CHALLAN INFORMATION</div>
+          <div class="row">
+            <span class="label">Challan ID:</span>
+            <span class="value">${challan.id}</span>
+          </div>
+          <div class="row">
+            <span class="label">Violation Type:</span>
+            <span class="value">${violationLabels[challan.violation_type] || challan.violation_type}</span>
+          </div>
+          <div class="row">
+            <span class="label">Date Issued:</span>
+            <span class="value">${new Date(challan.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
+          </div>
+          ${challan.location ? `<div class="row">
+            <span class="label">Location:</span>
+            <span class="value">${challan.location}</span>
+          </div>` : ''}
+          ${challan.vehicle_number ? `<div class="row">
+            <span class="label">Vehicle Number:</span>
+            <span class="value">${challan.vehicle_number}</span>
+          </div>` : ''}
+          ${challan.description ? `<div class="row">
+            <span class="label">Description:</span>
+            <span class="value">${challan.description}</span>
+          </div>` : ''}
+        </div>
+
+        <div class="section">
+          <div class="section-title">AMOUNT PAID</div>
+          <div class="row">
+            <span class="label">Challan Amount:</span>
+            <span class="value amount">₹${Number(challan.amount).toLocaleString('en-IN')}</span>
+          </div>
+          <div class="row">
+            <span class="label">Payment Status:</span>
+            <span class="value" style="color: #10b981;">✓ PAID</span>
+          </div>
+        </div>
+
+        <div class="stamp">
+          <p>*** This is a computer-generated receipt ***</p>
+          <p>Digital Signature Applied</p>
+        </div>
+
+        <div class="footer">
+          <p>Regional Transport Office - Government Initiative</p>
+          <p>For queries, contact: support@rto.gov.in | Helpline: 1800-XXX-XXXX</p>
+          <p>Generated on: ${new Date().toLocaleString('en-IN')}</p>
+        </div>
+      </body>
+      </html>
+    `;
+
+    // Create blob and download
+    const blob = new Blob([receiptHTML], { type: 'text/html' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `RTO_Receipt_${challan.id.slice(0, 8)}_${Date.now()}.html`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+
+    toast({ title: 'Receipt Downloaded', description: 'Your payment receipt has been downloaded' });
+  };
+
+  const totalUnpaid = challans.filter(c => c.status === 'UNPAID').reduce((sum, c) => sum + Number(c.amount), 0);
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
@@ -171,7 +380,12 @@ const MyChallans: React.FC = () => {
                         <p className="font-semibold">{violationLabels[challan.violation_type] || challan.violation_type}</p>
                         <p className="text-sm text-muted-foreground">Challan ID: {challan.id.slice(0, 12)}</p>
                         {challan.location && <p className="text-sm text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" />{challan.location}</p>}
-                        <p className="text-sm text-muted-foreground">{new Date(challan.created_at).toLocaleDateString()}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {(challan.issued_at || challan.created_at) 
+                            ? new Date(challan.issued_at || challan.created_at).toLocaleDateString()
+                            : 'N/A'
+                          }
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
@@ -182,7 +396,7 @@ const MyChallans: React.FC = () => {
                       <div className="flex gap-2">
                         {challan.status === 'UNPAID' && (
                           <>
-                            <Button className="btn-gradient" onClick={() => handlePay(challan)}><CreditCard className="h-4 w-4 mr-2" />Pay Now</Button>
+                            <Button className="btn-gradient" onClick={() => handlePayClick(challan)}><CreditCard className="h-4 w-4 mr-2" />Pay Now</Button>
                             <Dialog>
                               <DialogTrigger asChild>
                                 <Button variant="outline" onClick={() => setSelectedChallan(challan)}>Dispute</Button>
@@ -208,6 +422,16 @@ const MyChallans: React.FC = () => {
                             </Dialog>
                           </>
                         )}
+                        {challan.status === 'PAID' && (
+                          <>
+                            <Button variant="outline" onClick={() => handleViewPaymentDetails(challan)}>
+                              <Eye className="h-4 w-4 mr-2" />View
+                            </Button>
+                            <Button className="btn-gradient" onClick={() => handleDownloadReceipt(challan)}>
+                              <Download className="h-4 w-4 mr-2" />Receipt
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -217,6 +441,227 @@ const MyChallans: React.FC = () => {
           ))}
         </div>
       )}
+
+      {/* Payment Dialog */}
+      <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
+        <DialogContent className="glass-card max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {paymentStep === 'success' ? 'Payment Successful!' : 'Pay Challan'}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {paymentStep === 'select' && paymentChallan && (
+            <div className="space-y-6">
+              {/* Challan Summary */}
+              <div className="p-4 rounded-xl bg-muted/50 space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Violation</span>
+                  <span className="font-medium">{violationLabels[paymentChallan.violation_type]}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Challan ID</span>
+                  <span className="font-mono text-sm">{paymentChallan.id.slice(0, 12)}...</span>
+                </div>
+                <div className="flex justify-between items-center pt-2 border-t">
+                  <span className="font-semibold">Amount to Pay</span>
+                  <span className="text-xl font-bold text-primary">₹{paymentChallan.amount.toLocaleString()}</span>
+                </div>
+              </div>
+
+              {/* Payment Method Selection */}
+              <div className="space-y-3">
+                <Label>Select Payment Method</Label>
+                <RadioGroup value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as PaymentMethod)}>
+                  {paymentMethods.map((method) => (
+                    <div key={method.id} className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${paymentMethod === method.id ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'}`} onClick={() => setPaymentMethod(method.id as PaymentMethod)}>
+                      <RadioGroupItem value={method.id} id={method.id} />
+                      <method.icon className="h-5 w-5 text-muted-foreground" />
+                      <div className="flex-1">
+                        <Label htmlFor={method.id} className="cursor-pointer font-medium">{method.name}</Label>
+                        <p className="text-xs text-muted-foreground">{method.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </div>
+
+              {/* UPI ID Input */}
+              {paymentMethod === 'UPI' && (
+                <div className="space-y-2">
+                  <Label>UPI ID</Label>
+                  <Input 
+                    placeholder="yourname@upi" 
+                    value={upiId} 
+                    onChange={(e) => setUpiId(e.target.value)} 
+                    className="bg-muted/50"
+                  />
+                </div>
+              )}
+
+              {/* Card Number Input */}
+              {paymentMethod === 'CARD' && (
+                <div className="space-y-2">
+                  <Label>Card Number</Label>
+                  <Input 
+                    placeholder="1234 5678 9012 3456" 
+                    value={cardNumber} 
+                    onChange={(e) => setCardNumber(e.target.value.replace(/\D/g, '').replace(/(\d{4})/g, '$1 ').trim())} 
+                    maxLength={19}
+                    className="bg-muted/50"
+                  />
+                </div>
+              )}
+
+              {/* Security Note */}
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Shield className="h-4 w-4" />
+                <span>Your payment is secured with 256-bit encryption</span>
+              </div>
+
+              {/* Pay Button */}
+              <Button 
+                className="btn-gradient w-full" 
+                onClick={handlePayment} 
+                disabled={isProcessingPayment || (paymentMethod === 'UPI' && !upiId) || (paymentMethod === 'CARD' && cardNumber.replace(/\s/g, '').length < 16)}
+              >
+                Pay ₹{paymentChallan.amount.toLocaleString()}
+              </Button>
+            </div>
+          )}
+
+          {paymentStep === 'processing' && (
+            <div className="py-12 text-center space-y-4">
+              <div className="relative mx-auto w-16 h-16">
+                <div className="absolute inset-0 rounded-full border-4 border-primary/20"></div>
+                <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
+              </div>
+              <div>
+                <p className="font-semibold text-lg">Processing Payment</p>
+                <p className="text-muted-foreground">Please wait while we process your payment...</p>
+              </div>
+            </div>
+          )}
+
+          {paymentStep === 'success' && paymentChallan && (
+            <div className="py-8 text-center space-y-4">
+              <div className="mx-auto w-16 h-16 rounded-full bg-success/20 flex items-center justify-center">
+                <CheckCircle2 className="h-10 w-10 text-success" />
+              </div>
+              <div>
+                <p className="font-semibold text-lg">Payment Successful!</p>
+                <p className="text-muted-foreground">₹{paymentChallan.amount} paid via {paymentMethod}</p>
+              </div>
+              <div className="p-4 rounded-xl bg-muted/50 text-sm space-y-1">
+                <p><span className="text-muted-foreground">Transaction ID:</span> TXN{Date.now().toString().slice(-8)}</p>
+                <p><span className="text-muted-foreground">Date:</span> {new Date().toLocaleString()}</p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Payment Details Dialog */}
+      <Dialog open={isPaymentDetailsOpen} onOpenChange={setIsPaymentDetailsOpen}>
+        <DialogContent className="glass-card max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Payment Details</DialogTitle>
+          </DialogHeader>
+          
+          {viewingChallan && (
+            <div className="space-y-6">
+              {/* Payment Status */}
+              <div className="flex items-center justify-center p-4 rounded-xl bg-success/10">
+                <CheckCircle2 className="h-8 w-8 text-success mr-3" />
+                <div>
+                  <p className="font-semibold text-lg">Payment Completed</p>
+                  <p className="text-sm text-muted-foreground">Your challan has been successfully paid</p>
+                </div>
+              </div>
+
+              {/* Transaction Details */}
+              <div className="space-y-3">
+                <h3 className="font-semibold text-sm text-muted-foreground uppercase">Transaction Information</h3>
+                <div className="p-4 rounded-xl bg-muted/50 space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Transaction ID</span>
+                    <span className="font-mono font-semibold">{viewingChallan.transaction_id || `TXN-${viewingChallan.id.slice(0, 12)}`}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Payment Method</span>
+                    <span className="font-semibold">{viewingChallan.payment_method || 'UPI'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Payment Date</span>
+                    <span className="font-semibold">{viewingChallan.paid_at ? new Date(viewingChallan.paid_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' }) : new Date().toLocaleDateString('en-IN')}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Payment Time</span>
+                    <span className="font-semibold">{viewingChallan.paid_at ? new Date(viewingChallan.paid_at).toLocaleTimeString('en-IN') : new Date().toLocaleTimeString('en-IN')}</span>
+                  </div>
+                  <div className="flex justify-between border-t pt-3">
+                    <span className="text-muted-foreground">Amount Paid</span>
+                    <span className="text-xl font-bold text-success">₹{Number(viewingChallan.amount).toLocaleString('en-IN')}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Challan Details */}
+              <div className="space-y-3">
+                <h3 className="font-semibold text-sm text-muted-foreground uppercase">Challan Information</h3>
+                <div className="p-4 rounded-xl bg-muted/50 space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Challan ID</span>
+                    <span className="font-mono text-sm">{viewingChallan.id}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Violation Type</span>
+                    <span className="font-semibold">{violationLabels[viewingChallan.violation_type] || viewingChallan.violation_type}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Date Issued</span>
+                    <span className="font-semibold">
+                      {(viewingChallan.created_at || viewingChallan.issued_at)
+                        ? new Date(viewingChallan.created_at || viewingChallan.issued_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })
+                        : 'N/A'
+                      }
+                    </span>
+                  </div>
+                  {viewingChallan.location && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Location</span>
+                      <span className="font-semibold">{viewingChallan.location}</span>
+                    </div>
+                  )}
+                  {viewingChallan.vehicle_number && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Vehicle Number</span>
+                      <span className="font-semibold">{viewingChallan.vehicle_number}</span>
+                    </div>
+                  )}
+                  {viewingChallan.description && (
+                    <div className="flex flex-col gap-1">
+                      <span className="text-muted-foreground">Description</span>
+                      <span className="text-sm">{viewingChallan.description}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3">
+                <Button className="flex-1 btn-gradient" onClick={() => handleDownloadReceipt(viewingChallan)}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Download Receipt
+                </Button>
+                <Button variant="outline" onClick={() => setIsPaymentDetailsOpen(false)}>
+                  Close
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
