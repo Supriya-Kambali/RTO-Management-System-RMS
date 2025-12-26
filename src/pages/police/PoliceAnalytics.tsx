@@ -133,7 +133,7 @@ const PoliceAnalytics: React.FC = () => {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Top Violation</p>
-                <p className="text-3xl font-bold text-lg">{topViolation.type || 'N/A'}</p>
+                <p className="text-3xl font-bold">{topViolation.type || 'N/A'}</p>
                 <p className="text-xs text-muted-foreground mt-1">{topViolation.count} cases</p>
               </div>
               <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-destructive to-warning flex items-center justify-center">

@@ -8,8 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { dlService, rtoService } from '@/services';
-import { DrivingLicense, DLApplication, RTOOffice, LicenseType } from '@/types';
-import { CreditCard, Plus, QrCode, RefreshCw, Loader2, CheckCircle2, Clock, XCircle, FileText, Calendar } from 'lucide-react';
+import { DrivingLicense, DLApplication, RTOOffice, LicenseType, User } from '@/types';
+import { CreditCard, Plus, QrCode, RefreshCw, Loader2, CheckCircle2, Clock, XCircle, FileText, Calendar, User as UserIcon, MapPin, Phone, Mail } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 const licenseTypes: LicenseType[] = ['LMV', 'HMV', 'MCWG', 'MCWOG', 'TRANS'];
 const licenseTypeLabels: Record<LicenseType, string> = {
@@ -33,12 +34,14 @@ const getStatusBadge = (status: string) => {
 
 const DrivingLicensePage: React.FC = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [license, setLicense] = useState<DrivingLicense | null>(null);
   const [applications, setApplications] = useState<DLApplication[]>([]);
   const [rtoOffices, setRtoOffices] = useState<RTOOffice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [digitalDLOpen, setDigitalDLOpen] = useState(false);
   const [formData, setFormData] = useState({ rto_office_id: '', license_type: '' as LicenseType });
 
   useEffect(() => {
@@ -168,7 +171,133 @@ const DrivingLicensePage: React.FC = () => {
                     <div><span className="text-muted-foreground">RTO</span><p className="font-medium">{rtoOffices.find(o => o.id === license.rto_office_id)?.name || license.rto_office_id.slice(0, 8)}</p></div>
                   </div>
                   <div className="flex gap-3 pt-2">
-                    <Button variant="outline"><QrCode className="h-4 w-4 mr-2" />View Digital DL</Button>
+                    <Dialog open={digitalDLOpen} onOpenChange={setDigitalDLOpen}>
+                      <DialogTrigger asChild>
+                        <Button variant="outline"><QrCode className="h-4 w-4 mr-2" />View Digital DL</Button>
+                      </DialogTrigger>
+                      <DialogContent className="glass-card max-w-lg max-h-[90vh] overflow-y-auto">
+                        <DialogHeader>
+                          <DialogTitle>Digital Driving License</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          {/* Digital DL Card */}
+                          <div className="relative bg-gradient-to-br from-primary via-secondary to-accent p-4 sm:p-6 rounded-xl sm:rounded-2xl text-white overflow-hidden">
+                            <div className="absolute top-0 right-0 opacity-10">
+                              <CreditCard className="h-24 w-24 sm:h-32 sm:w-32" />
+                            </div>
+                            <div className="relative space-y-3 sm:space-y-4">
+                              <div className="flex items-start justify-between">
+                                <div>
+                                  <p className="text-xs opacity-80">DRIVING LICENSE</p>
+                                  <p className="text-lg sm:text-2xl font-bold tracking-wider break-all">{license.dl_number}</p>
+                                </div>
+                                <div className="h-12 w-12 sm:h-16 sm:w-16 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center shrink-0 ml-2">
+                                  <QrCode className="h-8 w-8 sm:h-12 sm:w-12" />
+                                </div>
+                              </div>
+                              
+                              <div className="grid grid-cols-2 gap-3 sm:gap-4 pt-2 sm:pt-4">
+                                <div>
+                                  <p className="text-xs opacity-80">Holder Name</p>
+                                  <p className="font-semibold text-sm sm:text-base truncate">{user?.name || 'N/A'}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs opacity-80">License Type</p>
+                                  <p className="font-semibold text-sm sm:text-base">{license.license_type}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs opacity-80">Issue Date</p>
+                                  <p className="font-semibold text-sm sm:text-base">{new Date(license.issue_date).toLocaleDateString()}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs opacity-80">Valid Until</p>
+                                  <p className="font-semibold text-sm sm:text-base">{new Date(license.expiry_date).toLocaleDateString()}</p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Personal Details */}
+                          <Card className="glass-card">
+                            <CardContent className="pt-4 sm:pt-6 space-y-3 sm:space-y-4">
+                              <h3 className="font-semibold text-sm sm:text-base flex items-center gap-2">
+                                <UserIcon className="h-4 w-4" />
+                                Personal Information
+                              </h3>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
+                                <div>
+                                  <p className="text-muted-foreground text-xs">Full Name</p>
+                                  <p className="font-medium">{user?.name || 'N/A'}</p>
+                                </div>
+                                <div>
+                                  <p className="text-muted-foreground text-xs">Date of Birth</p>
+                                  <p className="font-medium">{user?.date_of_birth ? new Date(user.date_of_birth).toLocaleDateString() : 'N/A'}</p>
+                                </div>
+                                <div>
+                                  <p className="text-muted-foreground text-xs">Phone Number</p>
+                                  <p className="font-medium flex items-center gap-1">
+                                    <Phone className="h-3 w-3" />{user?.phone || 'N/A'}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-muted-foreground text-xs">Email</p>
+                                  <p className="font-medium flex items-center gap-1 break-all">
+                                    <Mail className="h-3 w-3 shrink-0" /><span className="truncate">{user?.email || 'N/A'}</span>
+                                  </p>
+                                </div>
+                                <div className="sm:col-span-2">
+                                  <p className="text-muted-foreground text-xs">Address</p>
+                                  <p className="font-medium flex items-start gap-1">
+                                    <MapPin className="h-3 w-3 mt-1 shrink-0" /><span>{user?.address || 'N/A'}</span>
+                                  </p>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+
+                          {/* License Details */}
+                          <Card className="glass-card">
+                            <CardContent className="pt-4 sm:pt-6 space-y-3 sm:space-y-4">
+                              <h3 className="font-semibold text-sm sm:text-base flex items-center gap-2">
+                                <CreditCard className="h-4 w-4" />
+                                License Details
+                              </h3>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
+                                <div>
+                                  <p className="text-muted-foreground text-xs">License Number</p>
+                                  <p className="font-medium font-mono text-xs sm:text-sm break-all">{license.dl_number}</p>
+                                </div>
+                                <div>
+                                  <p className="text-muted-foreground text-xs">License Type</p>
+                                  <p className="font-medium text-xs sm:text-sm">{license.license_type} - {licenseTypeLabels[license.license_type as LicenseType]}</p>
+                                </div>
+                                <div>
+                                  <p className="text-muted-foreground text-xs">Issue Date</p>
+                                  <p className="font-medium">{new Date(license.issue_date).toLocaleDateString()}</p>
+                                </div>
+                                <div>
+                                  <p className="text-muted-foreground text-xs">Expiry Date</p>
+                                  <p className="font-medium">{new Date(license.expiry_date).toLocaleDateString()}</p>
+                                </div>
+                                <div>
+                                  <p className="text-muted-foreground text-xs">Status</p>
+                                  <div>{getStatusBadge(license.status)}</div>
+                                </div>
+                                <div>
+                                  <p className="text-muted-foreground text-xs">RTO Office</p>
+                                  <p className="font-medium">{rtoOffices.find(o => o.id === license.rto_office_id)?.name || 'N/A'}</p>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+
+                          <div className="text-center text-xs text-muted-foreground px-2">
+                            <p>This is a digitally verified driving license issued by RTO Portal</p>
+                            <p className="mt-1">Valid across India • Keep this safe</p>
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                     <Button variant="outline"><RefreshCw className="h-4 w-4 mr-2" />Renew License</Button>
                   </div>
                 </div>
@@ -198,10 +327,19 @@ const DrivingLicensePage: React.FC = () => {
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        {app.test_date && (
+                        {(app.test_scheduled_at || app.test_date) && (
                           <div className="text-right text-sm">
                             <span className="text-muted-foreground">Test Date:</span>
-                            <p className="font-medium flex items-center gap-1"><Calendar className="h-3 w-3" />{new Date(app.test_date).toLocaleDateString()}</p>
+                            <p className="font-medium flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              {new Date(app.test_scheduled_at || app.test_date).toLocaleString('en-US', { 
+                                year: 'numeric', 
+                                month: '2-digit', 
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </p>
                           </div>
                         )}
                         {getStatusBadge(app.status)}

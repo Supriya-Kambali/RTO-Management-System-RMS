@@ -91,6 +91,7 @@ const getSidebarItems = (role: string): SidebarItem[] => {
         { icon: Bell, label: 'Notifications', href: 'notifications' },
         { icon: BarChart3, label: 'Analytics', href: 'analytics' },
         { icon: Users, label: 'Users', href: 'users' },
+        { icon: User, label: 'Profile', href: 'profile' },
       ];
 
     case 'SUPER_ADMIN':
@@ -101,6 +102,7 @@ const getSidebarItems = (role: string): SidebarItem[] => {
         { icon: Shield, label: 'Role Assignment', href: 'roles' },
         { icon: BarChart3, label: 'Analytics', href: 'analytics' },
         { icon: Settings, label: 'Settings', href: 'settings' },
+        { icon: User, label: 'Profile', href: 'profile' },
       ];
 
     case 'AUDITOR':
@@ -227,15 +229,17 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle
       <div className="p-3 border-t border-sidebar-border">
         {!isCollapsed ? (
           <div className="flex items-center gap-3 p-3 rounded-lg bg-sidebar-accent/50">
-            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shrink-0">
-              <User className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{user.name}</p>
-              <p className="text-xs text-sidebar-foreground/60 truncate">
-                {user.role.replace('_', ' ')}
-              </p>
-            </div>
+            <Link to={`${basePath}/profile`} className="flex items-center gap-3 flex-1 min-w-0 hover:opacity-80 transition-opacity">
+              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shrink-0">
+                <User className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{user.name}</p>
+                <p className="text-xs text-sidebar-foreground/60 truncate">
+                  {user.role.replace('_', ' ')}
+                </p>
+              </div>
+            </Link>
             <Button
               variant="ghost"
               size="icon"
@@ -246,19 +250,35 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle
             </Button>
           </div>
         ) : (
-          <Tooltip delayDuration={0}>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleLogout}
-                className="w-full text-sidebar-foreground hover:text-destructive hover:bg-destructive/10"
-              >
-                <LogOut className="h-5 w-5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">Logout</TooltipContent>
-          </Tooltip>
+          <div className="flex flex-col gap-2">
+            <Tooltip delayDuration={0}>
+              <TooltipTrigger asChild>
+                <Link to={`${basePath}/profile`}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="w-full text-sidebar-foreground hover:bg-sidebar-accent"
+                  >
+                    <User className="h-5 w-5" />
+                  </Button>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="right">Profile</TooltipContent>
+            </Tooltip>
+            <Tooltip delayDuration={0}>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleLogout}
+                  className="w-full text-sidebar-foreground hover:text-destructive hover:bg-destructive/10"
+                >
+                  <LogOut className="h-5 w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">Logout</TooltipContent>
+            </Tooltip>
+          </div>
         )}
       </div>
     </motion.aside>

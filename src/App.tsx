@@ -139,6 +139,7 @@ const App = () => (
               <Route path="notifications" element={<MyNotifications />} />
               <Route path="analytics" element={<AdminAnalytics />} />
               <Route path="users" element={<UserManagement />} />
+              <Route path="profile" element={<MyProfile />} />
             </Route>
 
             {/* Super Admin Dashboard */}
@@ -149,6 +150,7 @@ const App = () => (
               <Route path="roles" element={<RoleAssignment />} />
               <Route path="analytics" element={<AdminAnalytics />} />
               <Route path="settings" element={<SystemSettings />} />
+              <Route path="profile" element={<MyProfile />} />
             </Route>
 
             {/* Auditor Dashboard */}

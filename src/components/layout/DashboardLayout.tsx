@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import { DashboardSidebar } from './DashboardSidebar';
 import { Bell, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,20 @@ import { useAuth } from '@/contexts/AuthContext';
 export const DashboardLayout: React.FC = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const getProfilePath = () => {
+    if (!user) return '/profile';
+    switch (user.role) {
+      case 'CITIZEN': return '/citizen/profile';
+      case 'POLICE': return '/police/profile';
+      case 'RTO_OFFICER': return '/officer/profile';
+      case 'RTO_ADMIN': return '/admin/profile';
+      case 'SUPER_ADMIN': return '/super-admin/profile';
+      case 'AUDITOR': return '/auditor/profile';
+      default: return '/profile';
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -41,7 +55,10 @@ export const DashboardLayout: React.FC = () => {
                 </Badge>
               </Button>
               
-              <div className="hidden md:flex items-center gap-2 pl-3 border-l border-border">
+              <div 
+                onClick={() => navigate(getProfilePath())}
+                className="hidden md:flex items-center gap-2 pl-3 border-l border-border hover:bg-muted/50 rounded-lg px-3 py-1 cursor-pointer transition-colors"
+              >
                 <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
                   <span className="text-xs font-bold text-primary-foreground">
                     {user?.name?.charAt(0) || 'U'}

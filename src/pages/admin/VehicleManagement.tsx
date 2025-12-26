@@ -9,16 +9,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { vehicleService } from '@/services';
 import { Vehicle } from '@/types';
-import { Car, Search, CheckCircle2, XCircle, Clock, Loader2, Trash2, Info } from 'lucide-react';
-
-// Mock data for demo mode
-const mockVehicles: Vehicle[] = [
-  { id: 'v1', owner_id: 'user1', vehicle_type: 'CAR', make: 'Maruti Suzuki', model: 'Swift', year: 2023, color: 'White', engine_number: 'K12N1234567', chassis_number: 'MA3FJEB1S00123456', fuel_type: 'PETROL', registration_number: 'MH12AB1234', rto_office_id: 'rto1', status: 'APPROVED', verified: true, created_at: '2023-06-15', updated_at: '2023-06-20' },
-  { id: 'v2', owner_id: 'user2', vehicle_type: 'MOTORCYCLE', make: 'Honda', model: 'Activa 6G', year: 2024, color: 'Black', engine_number: 'JF50E1234567', chassis_number: 'ME4JF501ELT123456', fuel_type: 'PETROL', registration_number: null, rto_office_id: 'rto1', status: 'PENDING', verified: true, created_at: '2024-12-10', updated_at: '2024-12-15' },
-  { id: 'v3', owner_id: 'user3', vehicle_type: 'CAR', make: 'Hyundai', model: 'Creta', year: 2022, color: 'Blue', engine_number: 'G4NH1234567', chassis_number: 'MALC381CLNM123456', fuel_type: 'DIESEL', registration_number: 'MH14CD5678', rto_office_id: 'rto2', status: 'APPROVED', verified: true, created_at: '2022-03-10', updated_at: '2022-03-15' },
-  { id: 'v4', owner_id: 'user4', vehicle_type: 'TRUCK', make: 'Tata', model: 'Ace', year: 2023, color: 'Red', engine_number: 'RT1234567890', chassis_number: 'MAT453234LM123456', fuel_type: 'DIESEL', registration_number: null, rto_office_id: 'rto1', status: 'PENDING', verified: true, created_at: '2024-12-18', updated_at: '2024-12-20' },
-  { id: 'v5', owner_id: 'user1', vehicle_type: 'CAR', make: 'Toyota', model: 'Fortuner', year: 2021, color: 'Silver', engine_number: 'GD1234567890', chassis_number: 'MBJBB8CS1KF123456', fuel_type: 'DIESEL', registration_number: 'MH12XY9999', rto_office_id: 'rto1', status: 'SCRAPPED', verified: true, created_at: '2021-05-10', updated_at: '2024-06-15' },
-];
+import { Car, Search, CheckCircle2, XCircle, Clock, Loader2, Trash2 } from 'lucide-react';
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -38,7 +29,6 @@ const VehicleManagement: React.FC = () => {
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [regNumber, setRegNumber] = useState('');
   const [isApproving, setIsApproving] = useState(false);
-  const [isDemoMode, setIsDemoMode] = useState(false);
 
   useEffect(() => {
     fetchVehicles();
@@ -46,19 +36,18 @@ const VehicleManagement: React.FC = () => {
 
   const fetchVehicles = async () => {
     try {
-      const response = await vehicleService.listVehicles().catch(() => ({ success: false, data: [] }));
-      const data = response.success && Array.isArray(response.data) ? response.data : [];
-      
-      if (data.length === 0) {
-        setVehicles(mockVehicles);
-        setIsDemoMode(true);
-      } else {
-        setVehicles(data);
-      }
+      const response = await vehicleService.listVehicles();
+      // Handle nested response structure: { success: true, data: { vehicles: [...] } }
+      const vehicleData = (response.data as any)?.vehicles || response.data || [];
+      setVehicles(Array.isArray(vehicleData) ? vehicleData : []);
     } catch (error) {
       console.error('Error fetching vehicles:', error);
-      setVehicles(mockVehicles);
-      setIsDemoMode(true);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch vehicles',
+        variant: 'destructive',
+      });
+      setVehicles([]);
     } finally {
       setIsLoading(false);
     }
@@ -68,20 +57,22 @@ const VehicleManagement: React.FC = () => {
     if (!selectedVehicle || !regNumber) return;
     setIsApproving(true);
     try {
-      if (isDemoMode) {
-        setVehicles(prev => prev.map(v => v.id === selectedVehicle.id ? { ...v, status: 'APPROVED' as const, registration_number: regNumber } : v));
-        toast({ title: 'Demo Mode', description: 'Vehicle approved (Demo)' });
-      } else {
-        const response = await vehicleService.approveRegistration(selectedVehicle.id, regNumber);
-        if (response.success) {
-          toast({ title: 'Success', description: 'Vehicle approved successfully' });
-          fetchVehicles();
-        }
+      const response = await vehicleService.approveRegistration(selectedVehicle.id, regNumber);
+      if (response.success) {
+        toast({
+          title: 'Success',
+          description: 'Vehicle approved and registration number assigned successfully',
+        });
+        await fetchVehicles();
+        setSelectedVehicle(null);
+        setRegNumber('');
       }
-      setSelectedVehicle(null);
-      setRegNumber('');
     } catch (error: any) {
-      toast({ title: 'Error', description: error.response?.data?.message || 'Approval failed', variant: 'destructive' });
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to approve vehicle',
+        variant: 'destructive',
+      });
     } finally {
       setIsApproving(false);
     }
@@ -89,16 +80,18 @@ const VehicleManagement: React.FC = () => {
 
   const handleScrap = async (id: string) => {
     try {
-      if (isDemoMode) {
-        setVehicles(prev => prev.map(v => v.id === id ? { ...v, status: 'SCRAPPED' as const } : v));
-        toast({ title: 'Demo Mode', description: 'Vehicle marked as scrapped (Demo)' });
-      } else {
-        await vehicleService.markAsScrapped(id);
-        toast({ title: 'Success', description: 'Vehicle marked as scrapped' });
-        fetchVehicles();
-      }
+      await vehicleService.markAsScrapped(id);
+      toast({
+        title: 'Success',
+        description: 'Vehicle marked as scrapped successfully',
+      });
+      await fetchVehicles();
     } catch (error: any) {
-      toast({ title: 'Error', description: error.response?.data?.message || 'Failed to scrap', variant: 'destructive' });
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to mark vehicle as scrapped',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -116,13 +109,6 @@ const VehicleManagement: React.FC = () => {
 
   return (
     <div className="space-y-6 fade-in-up">
-      {isDemoMode && (
-        <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 border border-primary/20">
-          <Info className="h-4 w-4 text-primary" />
-          <span className="text-sm text-primary">Demo Mode: Displaying sample vehicle data</span>
-        </div>
-      )}
-      
       <div>
         <h1 className="text-2xl font-bold">Vehicle Management</h1>
         <p className="text-muted-foreground">Approve and manage vehicle registrations</p>

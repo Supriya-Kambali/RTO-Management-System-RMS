@@ -108,6 +108,14 @@ export const Navbar: React.FC = () => {
           <div className="hidden md:flex items-center gap-3">
             {isAuthenticated && user ? (
               <>
+                {/* Dashboard Button */}
+                <Button variant="outline" asChild>
+                  <Link to={getDashboardLink()}>
+                    <LayoutDashboard className="h-4 w-4 mr-2" />
+                    Dashboard
+                  </Link>
+                </Button>
+
                 {/* Notifications */}
                 <Button variant="ghost" size="icon" className="relative">
                   <Bell className="h-5 w-5" />
@@ -205,7 +213,7 @@ export const Navbar: React.FC = () => {
                 <div className="border-t border-border pt-6">
                   {isAuthenticated && user ? (
                     <div className="flex flex-col gap-3">
-                      <div className="flex items-center gap-3 px-4 py-3 bg-muted/50 rounded-lg">
+                      <Link to="/profile" className="flex items-center gap-3 px-4 py-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors cursor-pointer">
                         <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
                           <User className="h-5 w-5 text-primary-foreground" />
                         </div>
@@ -213,7 +221,7 @@ export const Navbar: React.FC = () => {
                           <p className="font-medium">{user.name}</p>
                           <p className="text-xs text-muted-foreground">{user.role.replace('_', ' ')}</p>
                         </div>
-                      </div>
+                      </Link>
                       <Button variant="outline" asChild className="w-full">
                         <Link to={getDashboardLink()}>
                           <LayoutDashboard className="mr-2 h-4 w-4" />

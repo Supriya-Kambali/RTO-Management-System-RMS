@@ -17,7 +17,7 @@ export type VehicleStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'SCRAPPED';
 export type LicenseType = 'LMV' | 'HMV' | 'MCWG' | 'MCWOG' | 'TRANS';
 
 // DL Application Status
-export type DLApplicationStatus = 'PENDING' | 'DOCUMENTS_VERIFIED' | 'TEST_SCHEDULED' | 'TEST_PASSED' | 'TEST_FAILED' | 'APPROVED' | 'REJECTED';
+export type DLApplicationStatus = 'PENDING' | 'DOCUMENTS_VERIFIED' | 'VERIFIED' | 'TEST_SCHEDULED' | 'TEST_PASSED' | 'TEST_FAILED' | 'APPROVED' | 'REJECTED';
 
 // Challan Status
 export type ChallanStatus = 'UNPAID' | 'PAID' | 'DISPUTED' | 'RESOLVED';
@@ -147,6 +147,7 @@ export interface DLApplication {
   documents_verified_by?: string;
   documents_verified_at?: string;
   test_date?: string;
+  test_scheduled_at?: string;
   test_result?: 'PASSED' | 'FAILED';
   dl_number?: string;
   rejected_reason?: string;
@@ -209,7 +210,17 @@ export interface Notification {
 }
 
 // Analytics Interfaces
+export interface DashboardStats {
+  total_users: number;
+  total_vehicles: number;
+  total_licenses: number;
+  total_challans: number;
+  pending_applications: number;
+  total_revenue: number;
+}
+
 export interface DashboardAnalytics {
+  stats: DashboardStats;
   total_users: number;
   total_vehicles: number;
   total_licenses: number;
@@ -227,7 +238,16 @@ export interface Activity {
   timestamp: string;
 }
 
+export interface RevenueData {
+  period: string;
+  challan_revenue: number;
+  dl_revenue: number;
+  vehicle_revenue: number;
+  total_revenue: number;
+}
+
 export interface RevenueAnalytics {
+  revenue: RevenueData[];
   total_revenue: number;
   revenue_by_month: { month: string; amount: number }[];
   revenue_by_type: { type: string; amount: number }[];
