@@ -42,7 +42,7 @@ export const challanService = {
   // Dispute a challan (citizen)
   disputeChallan: async (challanId: string, reason: string): Promise<ApiResponse<Challan>> => {
     const response = await api.post(`/challans/${challanId}/dispute`, {
-      dispute_reason: reason,
+      reason: reason,
     });
     return response.data;
   },
