@@ -1,9 +1,0 @@
-
-🧪 Test Login Credentials
-Role	Email	Password
-Citizen	john.doe@example.com	password123
-Police	police@traffic.gov.in	admin123
-RTO Officer	officer@rto.gov.in	admin123
-RTO Admin	rtoadmin@rto.gov.in	admin123
-Super Admin	admin@rto.gov.in	admin123
-Auditor	auditor@rto.gov.in	admin123
